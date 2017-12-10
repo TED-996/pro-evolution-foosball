@@ -7,8 +7,8 @@ class Input:
         a side (0 or 1)
         0, 1 or 2 rod inputs, for each:
             an index
-            a target offset
-            a target angle
+            an offset acceleration
+            an offset angle
     """
 
     def __init__(self, side, rods):

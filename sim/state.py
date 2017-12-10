@@ -33,4 +33,3 @@ class GameState:
         return GameState(self.score, [np.copy(self.ball[0]), np.copy(self.ball[1])], self.rods[:])
 
     def apply_inputs(self, inputs):
-        
