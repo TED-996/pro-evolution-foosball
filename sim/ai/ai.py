@@ -4,7 +4,9 @@ from sim.ai.NN import NN
 import pickle
 from random import random, randrange
 
+
 class AI:
+
     def __init__(self, load: bool = False,
                  state_size: int = 0,
                  rods_number: int = 0,
@@ -21,6 +23,9 @@ class AI:
         self.lamda = 0.9  # TODO adjust
         self.alpha = 0.2  # TODO adjust
         self.epsilon = 0.25  # greedy policy
+        # decreasing_rate will decrease epsilon such that in the future, when nn learned something
+        # to not make anymore random choices
+        self.__decreasing_rate = 0.992
         if load:
             self.__load(nn_file, actions_file)
             return
@@ -60,6 +65,7 @@ class AI:
         if random() < self.epsilon:  # should choose random an action
             self.last_action_index = randrange(0, len(self.actions))
             return self.actions[self.last_action_index]
+        self.epsilon *= self.__decreasing_rate
         self.last_action_index = argmax(self.last_prediction)
         return self.actions[self.last_action_index]
 
