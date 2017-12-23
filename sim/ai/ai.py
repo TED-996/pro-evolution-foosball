@@ -1,8 +1,8 @@
-from numpy import array, arange
+from numpy import array, arange, argmax
 from itertools import product
-from .NN import NN
+from sim.ai.NN import NN
 import pickle
-
+from random import random, randrange
 
 class AI:
     def __init__(self, load: bool = False,
@@ -15,8 +15,12 @@ class AI:
                  actions_file: str = "save.actions"):
         self.actions = None
         self.model = None
+        self.last_prediction = None
+        self.last_state = None
+        self.last_action_index = None
         self.lamda = 0.9  # TODO adjust
         self.alpha = 0.2  # TODO adjust
+        self.epsilon = 0.25  # greedy policy
         if load:
             self.__load(nn_file, actions_file)
             return
@@ -29,6 +33,7 @@ class AI:
         self.model = NN(input_dim=state_size,
                         hidden_layers=hidden_layers,
                         output_dim=len(self.actions))
+        self.model.compile()
 
     def __load(self, nn_file, actions_file):
         self.model = NN(load_file=nn_file)
@@ -42,3 +47,29 @@ class AI:
         pickle.dump(self.actions, fd, protocol=0)  # protocol 0 for compatibility
         fd.close()
 
+    def get_action(self, state):
+        # TODO see if state need modification to be a vector with 1 dimension
+        self.last_prediction = self.model.predict_action(state)
+        self.last_state = state
+        self.last_action_index = argmax(self.last_prediction)
+        return self.actions[self.last_action_index]
+
+    def get_action_off_policy(self, state):
+        self.last_prediction = self.model.predict_action(state)
+        self.last_state = state
+        if random() < self.epsilon:  # should choose random an action
+            self.last_action_index = randrange(0, len(self.actions))
+            return self.actions[self.last_action_index]
+        self.last_action_index = argmax(self.last_prediction)
+        return self.actions[self.last_action_index]
+
+    def update(self, action_based_reward: float, new_state):
+        q_value = max(self.last_prediction)
+        # TODO see if state need modification to be a vector with 1 dimension
+        next_max_q_value = max(self.model.predict_action(new_state))
+        q_value_updated = (1 - self.alpha) * q_value + \
+                          self.alpha * (action_based_reward + next_max_q_value)
+        # target will be last output of the network for state state, except for max value
+        # which will be replaced by q_value_updated
+        self.last_prediction[self.last_action_index] = q_value_updated
+        self.model.update(self.last_state, self.last_prediction)

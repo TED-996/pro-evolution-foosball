@@ -1,7 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
-from numpy import array, argmax
+from numpy import array
 
 
 class NN:
