@@ -15,6 +15,16 @@ class AI:
                  hidden_layers=(100, 100),
                  nn_file: str = "save.model",
                  actions_file: str = "save.actions"):
+        """
+        :param load: specify if model should be load
+        :param state_size: how many attributes has a state
+        :param rods_number: number of rods of a player
+        :param offset: represents a vector with scalars that will move rod to left/right
+        :param angle_velocity: represents a vector with rates of change of a rodsman angle
+        :param hidden_layers: a vector of values that represents how many units have each layer
+        :param nn_file: file to save neural network
+        :param actions_file: file to save actions_file
+        """
         self.actions = None
         self.model = None
         self.last_prediction = None
