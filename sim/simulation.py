@@ -1,4 +1,4 @@
-from . import table, input
+from . import table
 import pymunk
 
 
@@ -12,23 +12,23 @@ class Simulation:
     def __init__(self, table_info: table.TableInfo):
         self.table_info = table_info
         self.state = self.table_info.get_init_state()
-        self.inputs_applied = []
 
-        self.space : pymunk.Space
-        self.rod_bodies : [pymunk.Body]
-        self.ball_body : pymunk.Body
-        self.goal_bodies : (pymunk.Body, pymunk.Body)
+        self.space: pymunk.Space
+        self.rod_bodies: [pymunk.Body]
+        self.ball_body: pymunk.Body
+        self.goal_bodies: (pymunk.Body, pymunk.Body)
 
         self.space, bodies = self.table_info.get_space()
         self.rod_bodies = bodies["rods"]
         self.ball_body = bodies["ball"]
         self.goal_bodies = tuple(bodies["goals"])
 
-        self.rod_idx_cache = inverse_list(self.rod_bodies, key=id)
+        self.rod_body_idx_cache = inverse_list(self.rod_bodies, key=id)
         self.hook_velocities()
 
+    # noinspection PyUnusedLocal
     def get_rod_velocity(self, body, gravity, damping, dt):
-        rod_idx = self.rod_idx_cache[id(body)]
+        rod_idx = self.rod_body_idx_cache[id(body)]
         rod = self.state.rods[rod_idx]
         offset, offset_vel = rod[0]
         angle, angle_vel = rod[1]
@@ -38,7 +38,7 @@ class Simulation:
 
         vel_y = offset_vel
 
-        return (vel_x, vel_y)
+        return vel_x, vel_y
 
     def hook_velocities(self):
         for rod in self.rod_bodies:
@@ -57,15 +57,32 @@ class Simulation:
             self.state.rods[idx] = ((rod_offset, body.velocity[1]),
                                     (rod_angle, rod_angle - rod_last_angle))
 
-    def apply_inputs(self, input_to_apply:input.Input):
-        assert len(self.inputs_applied) < 2 and input_to_apply.side not in self.inputs_applied
-        self.inputs_applied.append(input_to_apply.side)
+    def apply_inputs(self, side, input):
+        self.state.apply_inputs(self.input_to_absolute(side, input))
 
-        self.state.apply_inputs(input)
+    def input_to_absolute(self, side, input):
+        rod_idx, offset_vel, angle_vel = input
+
+        # Side 1's rods are ordered in reverse
+        if side == 0:
+            ordered = self.table_info.rods
+        else:
+            ordered = reversed(self.table_info.rods)
+
+        # Find the rod_idx-th rod in the player's order
+        # The player's rods are those with side == rod[0]
+        idx_left = rod_idx
+        for abs_idx, rod in enumerate(ordered):
+            if side == rod[0]:
+                if idx_left == 0:
+                    return abs_idx
+                idx_left -= 1
+
+        raise ValueError("rod_idx {} too large".format(rod_idx))
 
     def tick(self, time):
-        # TODO: set velocities using body.velocity_func
         self.space.step(time)
+        self.fetch_state()
 
 
 def inverse_list(items, key):
