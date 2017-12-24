@@ -4,6 +4,17 @@ import pymunk.pygame_util
 import pygame
 
 
+"""
+IMPORTANT:
+There is still a problem: 
+Our space uses coordinates mostly in (0, 1) and i suspect that 
+pygame takes these values as PIXELS.
+So our entire space is a pixel.
+Might want to fix that.
+(scale the space or something)
+"""
+
+
 def _draw(space:pymunk.Space, surface:pygame.Surface):
     options = pymunk.pygame_util.DrawOptions(surface)
     pymunk.pygame_util.positive_y_is_up = False
