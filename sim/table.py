@@ -34,6 +34,28 @@ class TableInfo:
         self.goal_width = goal_width
         self.ball_radius = ball_radius
 
+    @staticmethod
+    def from_dict(value):
+        return TableInfo(
+            value["length"],
+            [
+                (
+                    rod["owner"],
+                    rod["x"],
+                    rod["foo_count"],
+                    rod["foo_spacing"]
+                )
+                for rod in value["rods"]
+            ],
+            (
+                value["foo"]["w"],
+                value["foo"]["l"],
+                value["foo"]["h"]
+            ),
+            value["goal_w"],
+            value["ball_r"]
+        )
+
     def get_init_state(self):
         return state.GameState(
             (0, 0),
@@ -71,9 +93,11 @@ class TableInfo:
 
         foo_w, foo_h, _ = self.foosman_size
 
+        # noinspection PyShadowingNames
         def create_rect(body, x, y, w, h):
             shape = pymunk.Poly.create_box(body, (w, h))
             shape.update(pymunk.Transform(tx=x, ty=y))
+            return shape
 
         for owner, x, foo_count, foo_dist, max_offset in self.rods:
             foo_x = x * self.length
@@ -139,7 +163,7 @@ class TableInfo:
 
         # Set up collision masks
         side_filter = pymunk.ShapeFilter(1, 1, 4)
-        foo_filter  = pymunk.ShapeFilter(2, 2, 4)
+        foo_filter = pymunk.ShapeFilter(2, 2, 4)
         ball_filter = pymunk.ShapeFilter(3, 4, 1 | 2)
 
         def apply_filter(bodies, shape_filter):
