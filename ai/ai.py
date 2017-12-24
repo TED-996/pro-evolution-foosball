@@ -1,6 +1,6 @@
 from numpy import array, arange, argmax
 from itertools import product
-from sim.ai.NN import NN
+from ai.NN import NN
 import pickle
 from random import random, randrange
 
