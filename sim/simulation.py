@@ -27,7 +27,7 @@ class Simulation:
         self._hook_velocities()
 
     # noinspection PyUnusedLocal
-    def _get_rod_velocity(self, body, gravity, damping, dt):
+    def _get_rod_velocity(self, body: pymunk.Body, gravity, damping, dt):
         rod_idx = self.rod_body_idx_cache[id(body)]
         rod = self.state.rods[rod_idx]
         offset, offset_vel = rod[0]
@@ -38,12 +38,12 @@ class Simulation:
 
         vel_y = offset_vel
 
-        return vel_x, vel_y
+        #return vel_x, vel_y
+        body.velocity = (vel_x, vel_y)
 
     def _hook_velocities(self):
         for rod in self.rod_bodies:
-            for body in rod:
-                body.velocity_func = self._get_rod_velocity
+            rod.velocity_func = self._get_rod_velocity
 
     def _fetch_state(self):
         ball_offset = self.ball_body.position
@@ -75,7 +75,7 @@ class Simulation:
         for abs_idx, rod in enumerate(ordered):
             if side == rod[0]:
                 if idx_left == 0:
-                    return abs_idx
+                    return abs_idx, offset_vel, angle_vel
                 idx_left -= 1
 
         raise ValueError("rod_idx {} too large".format(rod_idx))

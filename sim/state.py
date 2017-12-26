@@ -31,8 +31,8 @@ class GameState:
 
     def apply_inputs(self, input):
         rod_idx, i_off_vel, i_ang_vel = input
-        curr_offset, offset_vel, curr_angle, angle_vel = self.rods[rod_idx]
+        (curr_offset, offset_vel), (curr_angle, angle_vel) = self.rods[rod_idx]
         offset_vel = i_off_vel
         angle_vel = i_ang_vel
 
-        self.rods[rod_idx] = (curr_offset, offset_vel, curr_angle, angle_vel)
+        self.rods[rod_idx] = ((curr_offset, offset_vel), (curr_angle, angle_vel))

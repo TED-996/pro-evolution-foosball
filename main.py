@@ -1,6 +1,7 @@
 from ui import test_ui
 from sim import simulation
 from sim import table
+import random
 
 
 def main():
@@ -9,16 +10,33 @@ def main():
     test_ui.run(sim, _get_inputs_function(sim))
 
 
-
-def _get_inputs_function(sim:simulation.Simulation):
+def _get_inputs_function(sim: simulation.Simulation):
     time = 0
-    def inputs_function(dt):
-        global time
-        time += dt
-        return [(s, i) for s in [0, 1] for i in random_input(s)]
+    rod_count = len(sim.table_info.rods) // 2
 
-    def random_input(side):
-        pass
+    def inputs_function(dt):
+        nonlocal time
+        time += dt
+        return [(s, i) for s in [0, 1] for i in random_inputs(s)]
+
+    def random_input(_, rod):
+        return rod, random.random() * 1.0, random.random() * 2
+
+    last_input = ([random_input(0, rod) for rod in range(rod_count)],
+                  [random_input(1, rod) for rod in range(rod_count)])
+    last_time = time
+
+    def random_inputs(side):
+        nonlocal last_time
+        nonlocal last_input
+
+        input = last_input[side]
+        if time - last_time > random.random() + 0.1:
+            rod, offset, angle = input.pop(0)
+            input.append(random_input(side, rod))
+            last_time = time
+
+        return last_input[side]
 
     return inputs_function
 
@@ -31,7 +49,7 @@ def _get_table_info():
                 "owner": 0,
                 "x": 0.1,
                 "foo_count": 1,
-                "foo_spacing": 1
+                "foo_spacing": 0
             },
             {
                 "owner": 0,
@@ -73,7 +91,7 @@ def _get_table_info():
                 "owner": 1,
                 "x": 1 - 0.1,
                 "foo_count": 1,
-                "foo_spacing": 1
+                "foo_spacing": 0
             }
         ],
         "foo": {
@@ -81,5 +99,10 @@ def _get_table_info():
             "l": 0.08,
             "h": 0.09
         },
-        "ball_r": 0.045
+        "ball_r": 0.045,
+        "goal_w": 0.25
     }
+
+
+if __name__ == '__main__':
+    main()

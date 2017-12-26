@@ -32,9 +32,10 @@ def run(sim:simulation.Simulation, inputs_function):
             if event.type == pygame.QUIT:
                 done = True
 
-        for side, input in inputs_function():
+        tick_s = clock.tick(60) / 1000.0
+        for side, input in inputs_function(tick_s):
             sim.apply_inputs(side, input)
-        sim.tick(clock.tick(60) / 1000.0)
+        sim.tick(tick_s)
 
         _draw(sim.space, screen)
         pygame.display.flip()
