@@ -1,5 +1,6 @@
 from . import table
 import pymunk
+import math
 
 
 class Simulation:
@@ -38,7 +39,7 @@ class Simulation:
 
         vel_y = offset_vel
 
-        #return vel_x, vel_y
+        # return vel_x, vel_y
         body.velocity = (vel_x, vel_y)
 
     def _hook_velocities(self):

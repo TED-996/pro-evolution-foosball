@@ -192,12 +192,13 @@ class TableInfo:
         foo_h = self.foosman_size[1]
 
         asin_arg = (start_x - rod_x) / foo_h
+
         return math.asin(max(min(asin_arg, 1), -1))
 
     def get_rod_offset(self, rod_idx, rod_y):
         # y is 0.5 +- 0.5 * self.rods[rod_idx].max_offset ([4])
         delta_y = rod_y - 0.5
-        print(self.rods[rod_idx])
         max_offset = self.rods[rod_idx][4]
         unclamped = (delta_y + max_offset / 2) / max_offset
+
         return max(min(unclamped, 1), 0)
