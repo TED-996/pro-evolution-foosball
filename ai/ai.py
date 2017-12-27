@@ -54,13 +54,14 @@ class AI:
     def __load(self, nn_file, actions_file):
         self.model = NN(load_file=nn_file)
         fd = open(actions_file, "rb")
-        self.actions = pickle.load(fd)
+        self.rods_number, self.actions = pickle.load(fd)
         fd.close()
 
     def save(self, nn_file: str="save.model", actions_file: str="save.actions"):
         self.model.save(nn_file)
         fd = open(actions_file, "wb")
-        pickle.dump(self.actions, fd, protocol=0)  # protocol 0 for compatibility
+        to_save = (self.rods_number, self.actions)
+        pickle.dump(to_save, fd, protocol=0)  # protocol 0 for compatibility
         fd.close()
 
     def __compute_and_backup(self, state):
