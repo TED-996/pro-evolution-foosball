@@ -106,7 +106,7 @@ class AI:
 
     def get_action_off_policy(self, state, action_selector):
         self.__compute_and_backup(state)
-        if random() < self.epsilon:  # should choose random an action
+        if random() < self.epsilon:  # should choose an action random
             self.last_action_index = action_selector(True, None)
             return [self.actions[i] for i in self.last_action_index]
         self.epsilon *= self.__decreasing_rate
