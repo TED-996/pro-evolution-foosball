@@ -1,5 +1,6 @@
 from . import table
 import pymunk
+import numpy as np
 import math
 
 
@@ -98,13 +99,18 @@ class Simulation:
         half_goal = self.table_info.goal_width / 2
         player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
         # check for goal
-        if player_starting_point - (((-1) ** (1 ^ player)) * self.state.ball.real) <= 0 \
-           and ((0.5 - half_goal) < self.state.ball.imag < (0.5 + half_goal)):
+        if player_starting_point - (((-1) ** (1 ^ player)) * self.state.ball[0].real) <= 0 \
+           and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
             return 100
-        # return a score that is positive if the ball is in the opponent half or negative otherwise
-        # this score will be weighted by how close is ball to the goal
-        sign = -1 if abs(player_starting_point - self.state.ball.real) < (self.table_info.length / 2) else 1
-        return sign * abs(self.table_info.length / 2 - self.state.ball.real)
+        ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
+        if ball_direction == 0:
+            return -1  # penalty for inert state of the ball
+
+        # return a score that is a sum of:
+        #   how far is the ball from goal of player
+        #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
+        return abs(player_starting_point - self.state.ball[0].real) + \
+               abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction
 
 
 def _inverse_list(items, key):
