@@ -15,13 +15,37 @@ Might want to fix that.
 """
 
 
-def _draw(space:pymunk.Space, surface:pygame.Surface):
+def hack_the_pymunk():
+    from_pygame_save = pymunk.pygame_util.from_pygame
+    to_pygame_save = pymunk.pygame_util.to_pygame
+
+    scale = 500
+
+    def from_pygame(p, surface):
+        x, y = p
+        #return from_pygame_save((x / 1000, y / 1000), surface)
+        return x / scale, y / scale
+
+    def to_pygame(p, surface):
+        x, y = p
+        #return to_pygame_save((x * 1000, y * 1000), surface)
+        return int(x * scale), int(y * scale)
+
+
+    pymunk.pygame_util.from_pygame = from_pygame
+    pymunk.pygame_util.to_pygame = to_pygame
+
+
+hack_the_pymunk()
+
+
+def _draw(space: pymunk.Space, surface: pygame.Surface):
     options = pymunk.pygame_util.DrawOptions(surface)
     pymunk.pygame_util.positive_y_is_up = False
     space.debug_draw(options)
 
 
-def run(sim:simulation.Simulation, inputs_function):
+def run(sim: simulation.Simulation, inputs_function):
     pygame.init()
     screen = pygame.display.set_mode((1000, 1000))
     done = False
@@ -37,5 +61,6 @@ def run(sim:simulation.Simulation, inputs_function):
             sim.apply_inputs(side, input)
         sim.tick(tick_s)
 
+        screen.fill((0, 0, 0))
         _draw(sim.space, screen)
         pygame.display.flip()

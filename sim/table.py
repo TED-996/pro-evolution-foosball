@@ -27,7 +27,7 @@ class TableInfo:
                 x,
                 foo_count,
                 foo_dist,
-                1 - foo_count * foo_dist
+                1 - (foo_count - 1) * foo_dist - foosman_size[1]
             ))
         foo_x, foo_y, foo_h = foosman_size
         self.foosman_size = (float(foo_x), float(foo_y), float(foo_h))
@@ -82,10 +82,12 @@ class TableInfo:
         }
         """
         space = pymunk.Space()
+        space.gravity = (0, 0)
 
         ball_body = pymunk.Body(0, 0)
         ball_shape = pymunk.Circle(ball_body, self.ball_radius)
         ball_shape.density = 1.0
+        ball_shape.elasticity = 0.8
         ball_body.position = (self.length / 2, 0.5)
 
         space.add(ball_body, ball_shape)
@@ -96,20 +98,26 @@ class TableInfo:
 
         # noinspection PyShadowingNames
         def create_rect(body, x, y, w, h):
-            shape = pymunk.Poly.create_box(body, (w, h))
-            shape.update(pymunk.Transform(tx=x, ty=y))
-            return shape
+            # shape = pymunk.Poly.create_box(body, (w, h))
+            # shape.update(pymunk.Transform(tx=x, ty=y))
+            hw = w / 2
+            hh = h / 2
+            return pymunk.Poly(body, [
+                (x - hw, y - hh),
+                (x - hw, y + hh),
+                (x + hw, y + hh),
+                (x + hw, y - hh)
+            ])
 
         for owner, x, foo_count, foo_dist, max_offset in self.rods:
-            foo_x = x * self.length
             rod_body = pymunk.Body(0, 0, pymunk.Body.KINEMATIC)
-            rod_body.position = (foo_x, 0.5)
+            rod_body.position = (x, 0.5)
             space.add(rod_body)
 
             rod_bodies.append(rod_body)
 
             for body_idx in range(foo_count):
-                delta_y = foo_dist * foo_count + max_offset / 2 + foo_w / 2 - 0.5
+                delta_y = foo_dist * ((foo_count - 1) / 2 - body_idx)
 
                 foo_shape = create_rect(rod_body, 0, delta_y, foo_w, foo_h)
                 space.add(foo_shape)
@@ -120,7 +128,7 @@ class TableInfo:
 
         goal1_body = pymunk.Body(0, 0, pymunk.Body.STATIC)
         goal1_body.position = (self.length, 0.5)
-        goal1_shape = pymunk.Segment(goal0_body, (0, -self.goal_width / 2), (0, self.goal_width / 2), 0.01)
+        goal1_shape = pymunk.Segment(goal1_body, (0, -self.goal_width / 2), (0, self.goal_width / 2), 0.01)
 
         space.add(goal0_body, goal0_shape)
         space.add(goal1_body, goal1_shape)
@@ -132,7 +140,7 @@ class TableInfo:
 
         side_bottom_body = pymunk.Body(0, 0, pymunk.Body.STATIC)
         side_bottom_body.position = (self.length / 2, 1)
-        side_bottom_shape = pymunk.Segment(side_top_body, (-self.length / 2, 0), (self.length / 2, 0), 0.01)
+        side_bottom_shape = pymunk.Segment(side_bottom_body, (-self.length / 2, 0), (self.length / 2, 0), 0.01)
         space.add(side_bottom_body, side_bottom_shape)
 
         goal_clearance = (1 - self.goal_width) / 2
@@ -159,13 +167,19 @@ class TableInfo:
 
         side_bodies = [goal0_body, goal1_body, side_top_body, side_bottom_body,
                        side_lt_body, side_lb_body, side_rt_body, side_rb_body]
+        excl_side_bodies = [side_top_body, side_bottom_body,
+                            side_lt_body, side_lb_body, side_rt_body, side_rb_body]
         # already have foo_bodies
         # already have ball_body
 
+        for shape in space.shapes:
+            shape.elasticity = 0.8
+
         # Set up collision masks
-        side_filter = pymunk.ShapeFilter(1, 1, 4)
+        side_filter = pymunk.ShapeFilter(1, 1, 2 | 4)
         foo_filter = pymunk.ShapeFilter(2, 2, 4)
-        ball_filter = pymunk.ShapeFilter(3, 4, 1 | 2)
+        ball_filter = pymunk.ShapeFilter(4, 4, 1 | 2)
+        goal_filter = pymunk.ShapeFilter(1, 1, 2)
 
         def apply_filter(bodies, shape_filter):
             for body in bodies:
@@ -175,18 +189,20 @@ class TableInfo:
         apply_filter(side_bodies, side_filter)
         apply_filter(rod_bodies, foo_filter)
         apply_filter([ball_body], ball_filter)
+        apply_filter([goal0_body, goal1_body], goal_filter)
 
         return space, {
             "ball": ball_body,
             "rods": rod_bodies,
-            "goals": [goal0_body, goal1_body]
+            "goals": [goal0_body, goal1_body],
+            "excl_sides": excl_side_bodies
         }
 
     def get_rod_x(self, rod_idx, angle):
         start_x = self.rods[rod_idx][1]
         foo_h = self.foosman_size[1]
 
-        return start_x - math.sin(angle) * foo_h
+        return start_x - math.sin(angle * (math.pi / 2)) * foo_h
 
     def get_rod_angle(self, rod_idx, rod_x):
         start_x = self.rods[rod_idx][1]
@@ -194,12 +210,14 @@ class TableInfo:
 
         asin_arg = (start_x - rod_x) / foo_h
 
-        return math.asin(max(min(asin_arg, 1), -1))
+        return math.asin(max(min(asin_arg, 1), -1)) / (math.pi / 2)
 
     def get_rod_offset(self, rod_idx, rod_y):
         # y is 0.5 +- 0.5 * self.rods[rod_idx].max_offset ([4])
         delta_y = rod_y - 0.5
         max_offset = self.rods[rod_idx][4]
         unclamped = (delta_y + max_offset / 2) / max_offset
+        # print("unclamped", unclamped)
 
-        return max(min(unclamped, 1), 0)
+        return unclamped
+        # return max(min(unclamped, 1), 0)

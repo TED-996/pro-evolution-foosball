@@ -24,6 +24,7 @@ class Simulation:
         self.rod_bodies = bodies["rods"]
         self.ball_body = bodies["ball"]
         self.goal_bodies = tuple(bodies["goals"])
+        self.side_bodies = tuple(bodies["excl_sides"])
 
         self.rod_body_idx_cache = _inverse_list(self.rod_bodies, key=id)
         self._hook_velocities()
@@ -34,11 +35,19 @@ class Simulation:
         rod = self.state.rods[rod_idx]
         offset, offset_vel = rod[0]
         angle, angle_vel = rod[1]
+        max_offset = self.table_info.rods[rod_idx][4]
 
-        next_foo_x = self.table_info.get_rod_x(rod_idx, angle + angle_vel)
-        vel_x = next_foo_x - body.position[0]
+        next_foo_x = self.table_info.get_rod_x(rod_idx, angle + angle_vel * dt)
+        vel_x = (next_foo_x - body.position[0]) / dt
+
+        a_offset = self.table_info.get_rod_offset(rod_idx, body.position[1])
+        if a_offset < 0 and offset_vel < 0:
+            offset_vel = 0
+        if a_offset > max_offset and offset_vel > 0:
+            offset_vel = 0
 
         vel_y = offset_vel
+        # vel_y = 0
 
         # return vel_x, vel_y
         body.velocity = (vel_x, vel_y)
@@ -68,13 +77,16 @@ class Simulation:
         # Side 1's rods are ordered in reverse
         if side == 0:
             ordered = self.table_info.rods
+            idxs = range(len(ordered))
         else:
             ordered = reversed(self.table_info.rods)
+            idxs = range(len(self.table_info.rods) - 1, -1, -1)
+
 
         # Find the rod_idx-th rod in the player's order
         # The player's rods are those with side == rod[0]
         idx_left = rod_idx
-        for abs_idx, rod in enumerate(ordered):
+        for abs_idx, rod in zip(idxs, ordered):
             if side == rod[0]:
                 if idx_left == 0:
                     return abs_idx, offset_vel, angle_vel
@@ -115,6 +127,9 @@ class Simulation:
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
         return abs(player_starting_point - self.state.ball[0].real) + \
             abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction
+
+    def get_rod_owners(self):
+        return [r[0] for r in self.table_info.rods]
 
 
 def _inverse_list(items, key):
