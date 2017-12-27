@@ -85,6 +85,27 @@ class Simulation:
         self.space.step(time)
         self._fetch_state()
 
+    def get_current_reward(self, player: int):
+        """
+        :param player: for what player to compute the score;
+                       must be:
+                        0 for player with the goal at x = 0 coordinate
+                        1 for player with the goal at x = MAX_X coordinate)
+        :return: a score for current state for player player
+        """
+        # to be deleted after integration
+        assert isinstance(player, int), "Player must be a integer"
+        half_goal = self.table_info.goal_width / 2
+        player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
+        # check for goal
+        if player_starting_point - (((-1) ** (1 ^ player)) * self.state.ball.real) <= 0 \
+           and ((0.5 - half_goal) < self.state.ball.imag < (0.5 + half_goal)):
+            return 100
+        # return a score that is positive if the ball is in the opponent half or negative otherwise
+        # this score will be weighted by how close is ball to the goal
+        sign = -1 if abs(player_starting_point - self.state.ball.real) < (self.table_info.length / 2) else 1
+        return sign * abs(self.table_info.length / 2 - self.state.ball.real)
+
 
 def _inverse_list(items, key):
     results = {}
