@@ -40,6 +40,7 @@ class AI:
             self.__load(nn_file, actions_file)
             return
 
+        self.rods_number = rods_number
         self.actions = array(
             [action for action in product(arange(rods_number),
                                           offset,
@@ -62,30 +63,68 @@ class AI:
         pickle.dump(self.actions, fd, protocol=0)  # protocol 0 for compatibility
         fd.close()
 
-    def get_action(self, state):
-        # TODO see if state need modification to be a vector with 1 dimension
+    def __compute_and_backup(self, state):
         self.last_prediction = self.model.predict_action(state)
         self.last_state = state
-        self.last_action_index = argmax(self.last_prediction)
-        return self.actions[self.last_action_index]
 
-    def get_action_off_policy(self, state):
-        self.last_prediction = self.model.predict_action(state)
-        self.last_state = state
+    def one_action(self, q_values):
+        return [argmax(q_values)]
+
+    def multiple_actions(self, q_values):
+        actions_idxs = []
+        slice_size = len(self.actions) / self.rods_number
+        for i in range(self.rods_number):
+            actions_idxs.append(i * slice_size + argmax(q_values[i * slice_size:(i + 1) * slice_size]))
+        return actions_idxs
+
+    def get_action(self, state, action_selector):
+        """
+        :param state: a state of the current game
+        :param action_selector: may be one of the following functions: ane_action, multiple_actions
+        :return:
+        """
+        # TODO see if state need modification to be a vector with 1 dimension
+        self.__compute_and_backup(state)
+        self.last_action_index = action_selector(self.last_prediction)
+        return [self.actions[i] for i in self.last_action_index]
+
+    def one_action_off_policy(self, rand, q_values):
+        if rand:
+            return [randrange(0, len(self.actions))]
+        else:
+            return self.one_action(q_values)
+
+    def multiple_actions_off_policy(self, rand, q_values):
+        slice_size = len(self.actions) / self.rods_number
+        if rand:
+            return [i * slice_size + randrange(0, len(self.actions))
+                    for i
+                    in range(self.rods_number)]
+        else:
+            return self.multiple_actions(q_values)
+
+    def get_action_off_policy(self, state, action_selector):
+        self.__compute_and_backup(state)
         if random() < self.epsilon:  # should choose random an action
-            self.last_action_index = randrange(0, len(self.actions))
-            return self.actions[self.last_action_index]
+            self.last_action_index = action_selector(True, None)
+            return [self.actions[i] for i in self.last_action_index]
         self.epsilon *= self.__decreasing_rate
-        self.last_action_index = argmax(self.last_prediction)
-        return self.actions[self.last_action_index]
+        self.last_action_index = action_selector(False, self.last_prediction)
+        return [self.actions[i] for i in self.last_action_index]
 
     def update(self, action_based_reward: float, new_state):
-        q_value = max(self.last_prediction)
+        q_values = [self.last_prediction[i] for i in self.last_action_index]
         # TODO see if state need modification to be a vector with 1 dimension
-        next_max_q_value = max(self.model.predict_action(new_state))
-        q_value_updated = (1 - self.alpha) * q_value + \
-                          self.alpha * (action_based_reward + next_max_q_value)
-        # target will be last output of the network for state state, except for max value
-        # which will be replaced by q_value_updated
-        self.last_prediction[self.last_action_index] = q_value_updated
+        action_selector = self.one_action if len(q_values) == 1 else self.multiple_actions
+        # compute for each rod or for one rod best move with respect to new_state
+        next_max_q_values = action_selector(self.model.predict_action(new_state))
+        # compute for each q value selected
+        #   (1 or more q values depending on
+        #   action_selector from get_action(_off_policy))
+        q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward + next_q)
+                           for q, next_q
+                           in zip(q_values, next_max_q_values)]
+        # replace old q_values with updated q_values (just those who have influenced taken actions)
+        for i, update in zip(self.last_action_index, q_values_updated):
+            self.last_prediction[i] = update
         self.model.update(self.last_state, self.last_prediction)
