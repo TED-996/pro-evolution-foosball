@@ -85,6 +85,7 @@ class TableInfo:
 
         ball_body = pymunk.Body(0, 0)
         ball_shape = pymunk.Circle(ball_body, self.ball_radius)
+        ball_shape.density = 1.0
         ball_body.position = (self.length / 2, 0.5)
 
         space.add(ball_body, ball_shape)

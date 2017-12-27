@@ -83,8 +83,12 @@ class Simulation:
         raise ValueError("rod_idx {} too large".format(rod_idx))
 
     def tick(self, time):
+        # _assert_no_nans(self.space)
+
         self.space.step(time)
         self._fetch_state()
+
+        # _assert_no_nans(self.space)
 
     def get_current_reward(self, player: int):
         """
@@ -100,7 +104,7 @@ class Simulation:
         player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
         # check for goal
         if player_starting_point - (((-1) ** (1 ^ player)) * self.state.ball[0].real) <= 0 \
-           and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
+                and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
             return 100
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
         if ball_direction == 0:
@@ -110,7 +114,7 @@ class Simulation:
         #   how far is the ball from goal of player
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
         return abs(player_starting_point - self.state.ball[0].real) + \
-               abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction
+            abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction
 
 
 def _inverse_list(items, key):
@@ -119,3 +123,16 @@ def _inverse_list(items, key):
         results[key(item)] = idx
 
     return results
+
+
+def _assert_no_nans(space: pymunk.Space):
+    def any_nan(t):
+        return any(math.isnan(x) for x in t)
+
+    for body in space.bodies:  # type:pymunk.Body
+        if any_nan(body.position) or any_nan(body.velocity):
+            raise ValueError("NaN in body!")
+        for shape in body.shapes:  # type:pymunk.Shape
+            if any_nan((shape.bb.top, shape.bb.bottom, shape.bb.left, shape.bb.right))\
+                    or any_nan((shape.mass,)) or any_nan((shape.moment,)):
+                raise ValueError("NaN in shape!")
