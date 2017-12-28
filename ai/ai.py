@@ -27,9 +27,9 @@ class AI:
         """
         self.actions = None
         self.model = None
-        self.last_prediction = None
-        self.last_state = None
-        self.last_action_index = None
+        self.last_predictions = []
+        self.last_states = []
+        self.last_actions_index = []
         self.lamda = 0.9  # TODO adjust
         self.alpha = 0.2  # TODO adjust
         self.epsilon = 0.25  # greedy policy
@@ -65,8 +65,8 @@ class AI:
         fd.close()
 
     def __compute_and_backup(self, state):
-        self.last_prediction = self.model.predict_action(state)
-        self.last_state = state
+        self.last_predictions.append(self.model.predict_action(state))
+        self.last_states.append(state)
 
     def one_action(self, q_values):
         return [argmax(q_values)]
@@ -86,8 +86,8 @@ class AI:
         """
         # TODO see if state need modification to be a vector with 1 dimension
         self.__compute_and_backup(state)
-        self.last_action_index = action_selector(self.last_prediction)
-        return [self.actions[i] for i in self.last_action_index]
+        self.last_actions_index.append(action_selector(self.last_predictions))
+        return [self.actions[i] for i in self.last_actions_index]
 
     def one_action_off_policy(self, rand, q_values):
         if rand:
@@ -107,25 +107,37 @@ class AI:
     def get_action_off_policy(self, state, action_selector):
         self.__compute_and_backup(state)
         if random() < self.epsilon:  # should choose an action random
-            self.last_action_index = action_selector(True, None)
-            return [self.actions[i] for i in self.last_action_index]
+            self.last_actions_index.append(action_selector(True, None))
+            return [self.actions[i] for i in self.last_actions_index]
         self.epsilon *= self.__decreasing_rate
-        self.last_action_index = action_selector(False, self.last_prediction)
-        return [self.actions[i] for i in self.last_action_index]
+        self.last_actions_index.append(action_selector(False, self.last_predictions))
+        return [self.actions[i] for i in self.last_actions_index]
 
-    def update(self, action_based_reward: float, new_state):
-        q_values = [self.last_prediction[i] for i in self.last_action_index]
-        # TODO see if state need modification to be a vector with 1 dimension
-        action_selector = self.one_action if len(q_values) == 1 else self.multiple_actions
-        # compute for each rod or for one rod best move with respect to new_state
-        next_max_q_values = action_selector(self.model.predict_action(new_state))
-        # compute for each q value selected
-        #   (1 or more q values depending on
-        #   action_selector from get_action(_off_policy))
-        q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward + next_q)
-                           for q, next_q
-                           in zip(q_values, next_max_q_values)]
-        # replace old q_values with updated q_values (just those who have influenced taken actions)
-        for i, update in zip(self.last_action_index, q_values_updated):
-            self.last_prediction[i] = update
-        self.model.update(self.last_state, self.last_prediction)
+    def update(self, action_based_reward: float, new_states):
+        assert len(action_based_reward) == len(new_states), "must have reward for each new_state"
+        assert len(new_states) == len(self.last_actions_index), \
+            "must have the same amount of new_states as {}".format(len(self.last_actions_index))
+
+        q_values = [[self.last_predictions[i][j]
+                    for j in self.last_actions_index[i]]
+                    for i in len(self.last_actions_index)]
+
+        action_selector = self.one_action if len(q_values[0]) == 1 else self.multiple_actions
+
+        for i in len(new_states):
+            next_max_q_values = action_selector(self.model.predict_action(new_states[i]))
+
+            q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward[i] + next_q)
+                                for q, next_q
+                                in zip(q_values[i], next_max_q_values)]
+
+            for j, update in zip(self.last_actions_index[i], q_values_updated):
+                self.last_predictions[i][j] = update
+        self.model.update(self.last_states, self.last_predictions)
+        self.last_states.clear()
+        self.last_actions_index.clear()
+        self.last_predictions.clear()
+
+    def predict_action(self, state, action_selector):
+        actions_idxs = action_selector(self.model.predict_action(state))
+        return [self.actions[i] for i in actions_idxs]
