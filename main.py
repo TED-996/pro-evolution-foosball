@@ -22,35 +22,6 @@ def main():
     custom_ui.run(sim, _get_inputs_function(sim))
 
 
-def complex_to_tuple(c):
-    return c.real, c.imag
-
-
-def get_states_from_sim(sim: simulation.Simulation):
-    state_1 = []
-    state_1.extend(complex_to_tuple(sim.state.ball[0]))
-    state_1.extend(complex_to_tuple(sim.state.ball[1]))
-    state_2 = state_1[:]
-
-    # rods for player 1
-    unpack = lambda p: [p[0][0], p[0][1], p[1][0], p[1][1]]
-    for i, j in zip(sim.state.rods, sim.table_info.rods):
-        state_1.extend(unpack(i))
-    for i in reversed(sim.state.rods):
-        state_2.extend(unpack(i))
-    return state_1, state_2
-
-
-def predict_actions(sim: simulation.Simulation):
-    """
-    :return: return 2 list with action for each rod of each player
-    """
-    s1, s2 = get_states_from_sim(sim)
-    p1_actions = pef_brain.predict_action(s1, pef_brain.multiple_actions)
-    p2_actions = pef_brain.predict_action(s2, pef_brain.multiple_actions)
-    return p1_actions, p2_actions
-
-
 def _get_inputs_function(sim: simulation.Simulation):
     time = 0
     rod_count = len(sim.table_info.rods) // 2
