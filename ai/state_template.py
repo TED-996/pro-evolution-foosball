@@ -8,7 +8,7 @@ class StateTemplate:
         self.rev_foosmans = []
         for rod in sim.table_info.rods:
             feature_selected = [rod[1], rod[2], rod[3]]
-            self.foosmans.add(feature_selected)
+            self.foosmans.append(feature_selected)
             self.rev_foosmans.insert(0, feature_selected)
 
     @staticmethod
@@ -22,7 +22,9 @@ class StateTemplate:
         state_2 = state_1[:]
 
         # rods for player 1
-        unpack = lambda p: [p[0][0], p[0][1], p[1][0], p[1][1]]
+        def unpack(p):
+            return [p[0][0], p[0][1], p[1][0], p[1][1]]
+
         for i, j in zip(sim.state.rods, self.foosmans):
             state_1.extend(unpack(i))
             state_1.extend(j)
