@@ -46,8 +46,8 @@ def predict_actions(sim: simulation.Simulation):
     :return: return 2 list with action for each rod of each player
     """
     s1, s2 = get_states_from_sim(sim)
-    p1_actions = pef_brain.get_action(s1, pef_brain.multiple_actions)
-    p2_actions = pef_brain.get_action(s2, pef_brain.multiple_actions)
+    p1_actions = pef_brain.predict_action(s1, pef_brain.multiple_actions)
+    p2_actions = pef_brain.predict_action(s2, pef_brain.multiple_actions)
     return p1_actions, p2_actions
 
 
