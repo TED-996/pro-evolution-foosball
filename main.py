@@ -1,13 +1,53 @@
 from ui import test_ui
 from sim import simulation
 from sim import table
+from ai.ai import AI
 import random
+
+# TODO configure model from a config file
+state_size = 10  # to be adjusted
+rods_number = 10  # to be adjusted
+offset = [0.2, 0.1, 0.0, -0.1, -0.2]  # to be adjusted
+angle_velocity = [0.75, 0.25, 0.0, -0.25, -0.75]  # to be adjusted
+pef_brain = AI(load=False,
+               state_size=state_size,
+               rods_number=rods_number,
+               offset=offset,
+               angle_velocity=angle_velocity)  # see hidden layers field
 
 
 def main():
     table_info = _get_table_info()
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     test_ui.run(sim, _get_inputs_function(sim))
+
+
+def complex_to_tuple(c):
+    return c.real, c.imag
+
+
+def get_states_from_sim(sim: simulation.Simulation):
+    state_1 = []
+    state_1.extend(complex_to_tuple(sim.state.ball[0]))
+    state_1.extend(complex_to_tuple(sim.state.ball[1]))
+    state_2 = state_1[:]
+
+    # rods for player 1
+    unpack = lambda p: [p[0][0], p[0][1], p[1][0], p[1][1]]
+    for i, j in zip(sim.state.rods, sim.table_info.rods):
+        state_1.extend(unpack(i))
+    for i in reversed(sim.state.rods):
+        state_2.extend(unpack(i))
+    return state_1, state_2
+
+def predict_actions(sim: simulation.Simulation):
+    """
+    :return: return 2 list with action for each rod of each player
+    """
+    s1, s2 = get_states_from_sim(sim)
+    p1_actions = pef_brain.get_action(s1, pef_brain.multiple_actions)
+    p2_actions = pef_brain.get_action(s2, pef_brain.multiple_actions)
+    return p1_actions, p2_actions
 
 
 def _get_inputs_function(sim: simulation.Simulation):
