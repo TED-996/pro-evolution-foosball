@@ -8,7 +8,7 @@ class StateTemplate:
         self.rev_foosmans = []
         for rod in sim.table_info.rods:
             feature_selected = [rod[1], rod[2], rod[3]]
-            self.foosmans.add(feature_selected)
+            self.foosmans.append(feature_selected)
             self.rev_foosmans.insert(0, feature_selected)
 
     @staticmethod
