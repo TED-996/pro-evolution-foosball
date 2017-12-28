@@ -7,6 +7,8 @@ import random
 def main():
     table_info = _get_table_info()
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
+    sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
+
     custom_ui.run(sim, _get_inputs_function(sim))
 
 

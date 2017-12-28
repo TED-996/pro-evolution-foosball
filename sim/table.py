@@ -221,3 +221,13 @@ class TableInfo:
 
         return unclamped
         # return max(min(unclamped, 1), 0)
+
+    def get_goal(self, position):
+        x, y = position.real, position.imag
+        if abs(y - 0.5) > self.goal_width / 2:
+            return None
+        if x < 0:
+            return 0
+        if x > self.length:
+            return 1
+        return None

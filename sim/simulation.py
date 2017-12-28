@@ -1,4 +1,5 @@
 from . import table
+from . import state
 import pymunk
 import numpy as np
 import math
@@ -13,6 +14,20 @@ class Simulation:
 
     def __init__(self, table_info: table.TableInfo):
         self.table_info = table_info
+
+        self.state: state.GameState = None
+        self.space: pymunk.Space = None
+        self.rod_bodies: [pymunk.Body] = None
+        self.ball_body: pymunk.Body = None
+        self.goal_bodies: (pymunk.Body, pymunk.Body) = None
+        self.side_bodies: [pymunk.Body] = None
+        self.rod_body_idx_cache: {pymunk.Body: int} = None
+
+        self.reset()
+
+        self.on_goal = []
+
+    def reset(self):
         self.state = self.table_info.get_init_state()
 
         self.space: pymunk.Space
@@ -82,7 +97,6 @@ class Simulation:
             ordered = reversed(self.table_info.rods)
             idxs = range(len(self.table_info.rods) - 1, -1, -1)
 
-
         # Find the rod_idx-th rod in the player's order
         # The player's rods are those with side == rod[0]
         idx_left = rod_idx
@@ -99,6 +113,7 @@ class Simulation:
 
         self.space.step(time)
         self._fetch_state()
+        self._check_on_goal()
 
         # _assert_no_nans(self.space)
 
@@ -130,6 +145,15 @@ class Simulation:
 
     def get_rod_owners(self):
         return [r[0] for r in self.table_info.rods]
+
+    def _check_on_goal(self):
+        goal_side = self.table_info.get_goal(self.state.ball[0])
+        if goal_side is not None:
+            self._on_goal(goal_side)
+
+    def _on_goal(self, side):
+        for handler in self.on_goal:
+            handler(side)
 
 
 def _inverse_list(items, key):
