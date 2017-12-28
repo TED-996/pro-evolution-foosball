@@ -2,26 +2,56 @@ from ui import custom_ui
 from sim import simulation
 from sim import table
 from ai.ai import AI
+from ai.state_template import StateTemplate
+import json
 import random
 
 
-# TODO configure model from a config file
-state_size = 10  # to be adjusted
-rods_number = 10  # to be adjusted
-offset = [0.2, 0.1, 0.0, -0.1, -0.2]  # to be adjusted
-angle_velocity = [0.75, 0.25, 0.0, -0.25, -0.75]  # to be adjusted
-pef_brain = AI(load=False,
-               state_size=state_size,
-               rods_number=rods_number,
-               offset=offset,
-               angle_velocity=angle_velocity)  # see hidden layers field
+conf = {}
+pef_brain = None
+state_template = None
+
+
+def load():
+    fd = open("config", "rt")
+    global conf, pef_brain
+    conf = json.load(fd)
+    pef_brain = AI(load=False,
+                   state_size=conf["state_size"],
+                   rods_number=conf["rods_number"],
+                   offset=conf["offset"],
+                   angle_velocity=conf["angle_velocity"])  # see hidden layers field
+    fd.close()
+
+
+def get_actions(sim: simulation.Simulation):
+    state_1, state_2 = state_template.get_states_from_sim(sim)
+    return pef_brain.predict_action(state_1, pef_brain.multiple_actions), \
+        pef_brain.predict_action(state_2, pef_brain.multiple_actions)
+
+
+def act_and_update_template(sim: simulation.Simulation):
+    # THIS FUNCTION IS JUST A TEMPLATE FOR HOW TO INTERACT WITH AI
+    # while loop
+    state_1, state_2 = state_template.get_states_from_sim(sim)
+    player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
+    player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
+
+    # apply input (player_1 and player_2) to sim
+    # update gui
+
+    new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
+    reward_1 = sim.get_current_reward(0)
+    reward_2 = sim.get_current_reward(1)
+    pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
+    # end loop
 
 
 def main():
     table_info = _get_table_info()
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
-
+    state_template = StateTemplate(sim)  # see better place (bogdan)
     custom_ui.run(sim, _get_inputs_function(sim))
 
 
