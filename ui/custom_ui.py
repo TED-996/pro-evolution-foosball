@@ -6,7 +6,7 @@ import pygame
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_function):
+def run(sim: simulation.Simulation, inputs_function, post_tick_function):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -47,6 +47,8 @@ def run(sim: simulation.Simulation, inputs_function):
             for side, input in inputs_function(tick_s):
                 sim.apply_inputs(side, input)
             sim.tick(tick_s)
+
+            post_tick_function()
 
         screen.fill((0, 0, 0))
         table.fill((0, 0, 0))

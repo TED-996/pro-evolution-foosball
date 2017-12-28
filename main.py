@@ -52,7 +52,7 @@ def main():
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
     state_template = StateTemplate(sim)  # see better place (bogdan)
-    custom_ui.run(sim, _get_inputs_function(sim))
+    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim))
 
 
 def _get_inputs_function(sim: simulation.Simulation):
@@ -85,6 +85,12 @@ def _get_inputs_function(sim: simulation.Simulation):
 
     return inputs_function
 
+
+def _get_post_tick_function(sim: simulation.Simulation):
+    def post_tick_function():
+        pass
+
+    return post_tick_function
 
 def _get_table_info():
     length = 2.0
