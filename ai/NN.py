@@ -51,6 +51,9 @@ class NN:
 
     def compile(self, lr=0.1, rho=0.9, epsilon=1e-08, decay=0.0):
         # TODO improvement of hyper-parameters of NN
+        if self.compiled:
+            print("already compiled!")
+            return
         self.compiled = True
         self.model.compile(optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),
                            loss="categorical_crossentropy",
@@ -68,4 +71,4 @@ class NN:
         :param state: input of the model
         :param target: output of the model
         """
-        self.model.train_on_batch(array([state]), array([target]))
+        self.model.train_on_batch(array(state), array(target))
