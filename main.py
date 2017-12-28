@@ -4,6 +4,7 @@ from sim import table
 from ai.ai import AI
 import random
 
+
 # TODO configure model from a config file
 state_size = 10  # to be adjusted
 rods_number = 10  # to be adjusted

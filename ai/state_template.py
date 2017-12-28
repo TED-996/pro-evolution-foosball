@@ -26,6 +26,7 @@ class StateTemplate:
         for i, j in zip(sim.state.rods, self.foosmans):
             state_1.extend(unpack(i))
             state_1.extend(j)
+
         # rods for player 2
         for i, j in zip(reversed(sim.state.rods), self.rev_foosmans):
             state_2.extend(unpack(i))
