@@ -40,6 +40,7 @@ def get_states_from_sim(sim: simulation.Simulation):
         state_2.extend(unpack(i))
     return state_1, state_2
 
+
 def predict_actions(sim: simulation.Simulation):
     """
     :return: return 2 list with action for each rod of each player
