@@ -129,10 +129,14 @@ class Simulation:
         assert isinstance(player, int), "Player must be a integer"
         half_goal = self.table_info.goal_width / 2
         player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
-        # check for goal
-        if player_starting_point - (((-1) ** (1 ^ player)) * self.state.ball[0].real) <= 0 \
+        # check for goal for player
+        if player_starting_point <= (((-1) ** (1 ^ player)) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
             return 100
+        # check for goal for opponent
+        if ((1 ^ player) * self.table_info.length) <= (((-1) ** player) * self.state.ball[0].real) \
+                and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
+            return -100
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
         if ball_direction == 0:
             return -1  # penalty for inert state of the ball
