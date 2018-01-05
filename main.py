@@ -12,7 +12,7 @@ pef_brain = None
 state_template = None
 
 
-def load():
+def load_from_config():
     fd = open("config", "rt")
     global conf, pef_brain
     conf = json.load(fd)
@@ -22,6 +22,17 @@ def load():
                    offset=conf["offset"],
                    angle_velocity=conf["angle_velocity"])  # see hidden layers field
     fd.close()
+
+
+def load():
+    global pef_brain
+    pef_brain = AI(load=True)
+
+
+def save():
+    global pef_brain
+    if pef_brain is not None:
+        pef_brain.save()
 
 
 def get_actions(sim: simulation.Simulation):
@@ -48,6 +59,8 @@ def act_and_update_template(sim: simulation.Simulation):
 
 
 def main():
+    global state_template
+    load_from_config()
     table_info = _get_table_info()
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
@@ -83,14 +96,28 @@ def _get_inputs_function(sim: simulation.Simulation):
 
         return last_input[side]
 
-    return inputs_function
+    def inputs_function_nn(_):  # this is a training function
+        # has arg just to follow inputs_function signature
+        global state_template
+        state_1, state_2 = state_template.get_states_from_sim(sim)
+        player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
+        player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
+        ret = list(map(lambda x: (0, x), player_1))
+        ret.extend(map(lambda x: (1, x), player_2))
+        return ret
+
+    return inputs_function_nn
 
 
 def _get_post_tick_function(sim: simulation.Simulation):
     def post_tick_function():
-        pass
+        new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
+        reward_1 = sim.get_current_reward(0)
+        reward_2 = sim.get_current_reward(1)
+        pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
 
     return post_tick_function
+
 
 def _get_table_info():
     length = 2.0

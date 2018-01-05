@@ -2,11 +2,12 @@ from sim import simulation
 import pymunk
 import pymunk.pygame_util
 import pygame
+from main import save
 
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_function, post_tick_function):
+def run(sim: simulation.Simulation, inputs_function, post_tick_function, save=save):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -32,6 +33,8 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function):
             if event.type == pygame.KEYDOWN:
                 if event.unicode == "r":
                     sim.reset()
+                if event.unicode == "s":
+                    save()
                 if event.key == pygame.K_LEFT and speed > 1:
                     speed -= 1
                     print("Speed set to {}".format(speed))

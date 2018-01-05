@@ -73,7 +73,7 @@ class AI:
 
     def multiple_actions(self, q_values):
         actions_idxs = []
-        slice_size = len(self.actions) / self.rods_number
+        slice_size = int(len(self.actions) // self.rods_number)
         for i in range(self.rods_number):
             actions_idxs.append(i * slice_size + argmax(q_values[i * slice_size:(i + 1) * slice_size]))
         return actions_idxs
@@ -86,8 +86,8 @@ class AI:
         """
         # TODO see if state need modification to be a vector with 1 dimension
         self.__compute_and_backup(state)
-        self.last_actions_index.append(action_selector(self.last_predictions))
-        return [self.actions[i] for i in self.last_actions_index]
+        self.last_actions_index.append(action_selector(self.last_predictions[-1]))
+        return [self.actions[i] for i in self.last_actions_index[-1]]
 
     def one_action_off_policy(self, rand, q_values):
         if rand:
@@ -96,9 +96,9 @@ class AI:
             return self.one_action(q_values)
 
     def multiple_actions_off_policy(self, rand, q_values):
-        slice_size = len(self.actions) / self.rods_number
+        slice_size = int(len(self.actions) // self.rods_number)
         if rand:
-            return [i * slice_size + randrange(0, len(self.actions))
+            return [i * slice_size + randrange(0, slice_size)
                     for i
                     in range(self.rods_number)]
         else:
@@ -106,25 +106,26 @@ class AI:
 
     def get_action_off_policy(self, state, action_selector):
         self.__compute_and_backup(state)
+
         if random() < self.epsilon:  # should choose an action random
             self.last_actions_index.append(action_selector(True, None))
-            return [self.actions[i] for i in self.last_actions_index]
-        self.epsilon *= self.__decreasing_rate
-        self.last_actions_index.append(action_selector(False, self.last_predictions))
-        return [self.actions[i] for i in self.last_actions_index]
+            return [self.actions[i] for i in self.last_actions_index[-1]]
 
-    def update(self, action_based_reward: float, new_states):
+        self.epsilon *= self.__decreasing_rate
+        self.last_actions_index.append(action_selector(False, self.last_predictions[-1]))
+        return [self.actions[i] for i in self.last_actions_index[-1]]
+
+    def update(self, action_based_reward, new_states):
         assert len(action_based_reward) == len(new_states), "must have reward for each new_state"
         assert len(new_states) == len(self.last_actions_index), \
             "must have the same amount of new_states as {}".format(len(self.last_actions_index))
 
         q_values = [[self.last_predictions[i][j]
                     for j in self.last_actions_index[i]]
-                    for i in len(self.last_actions_index)]
-
+                    for i in range(len(self.last_actions_index))]
         action_selector = self.one_action if len(q_values[0]) == 1 else self.multiple_actions
 
-        for i in len(new_states):
+        for i in range(len(new_states)):
             next_max_q_values = action_selector(self.model.predict_action(new_states[i]))
 
             q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward[i] + next_q)

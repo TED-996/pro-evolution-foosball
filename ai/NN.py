@@ -37,6 +37,7 @@ class NN:
         for layer_size in range(1, len(hidden_layers)):
             nn_layers.insert(-1, Dense(units=layer_size,
                                        activation="sigmoid"))
+        return nn_layers
 
     def __load(self, load_file):
         self.model = load_model(load_file)
@@ -62,9 +63,9 @@ class NN:
     def predict_action(self, state):
         """
         :param state: must be a vector with all values that will represent a state
-        :return: a tuple of action, that is considered to be the best, and corresponding q value
+        :return: an array with q values for each possible action
         """
-        return self.model.predict_on_batch(array([state]))
+        return self.model.predict_on_batch(array([state]))[0]
 
     def update(self, state, target):
         """
