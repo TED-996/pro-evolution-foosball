@@ -138,14 +138,16 @@ class Simulation:
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
             return -100
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
-        if ball_direction == 0:
-            return -1  # penalty for inert state of the ball
+
+        extra_score = 0
+        if abs(self.state.ball[1]) < 0.1:
+            extra_score = -50  # penalty for inert state of the ball
 
         # return a score that is a sum of:
         #   how far is the ball from goal of player
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
         return abs(player_starting_point - self.state.ball[0].real) + \
-            abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction
+            abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction + extra_score
 
     def get_rod_owners(self):
         return [r[0] for r in self.table_info.rods]

@@ -68,53 +68,51 @@ def main():
     custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim))
 
 
+last_input = None
+action_taken = None
+
 def _get_inputs_function(sim: simulation.Simulation):
     time = 0
-    rod_count = len(sim.table_info.rods) // 2
 
-    def inputs_function(dt):
-        nonlocal time
-        time += dt
-        return [(s, i) for s in [0, 1] for i in random_inputs(s)]
-
-    def random_input(_, rod):
-        return rod, (random.random() - 0.5) * 1.0, (random.random() - 0.5) * 16.0
-
-    last_input = ([random_input(0, rod) for rod in range(rod_count)],
-                  [random_input(1, rod) for rod in range(rod_count)])
+    last_input = None
     last_time = time
 
-    def random_inputs(side):
-        nonlocal last_time
-        nonlocal last_input
-
-        input = last_input[side]
-        if time - last_time > random.random() + 0.1:
-            rod, offset, angle = input.pop(0)
-            input.append(random_input(side, rod))
-            last_time = time
-
-        return last_input[side]
-
-    def inputs_function_nn(_):  # this is a training function
+    def inputs_function_nn(dt):  # this is a training function
         # has arg just to follow inputs_function signature
         global state_template
-        state_1, state_2 = state_template.get_states_from_sim(sim)
-        player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
-        player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
-        ret = list(map(lambda x: (0, x), player_1))
-        ret.extend(map(lambda x: (1, x), player_2))
-        return ret
+        nonlocal time
+        nonlocal last_time
+        nonlocal last_input
+        global action_taken
+
+        time += dt
+
+        action_taken = False
+
+        if last_input is None or time - last_time > random.random() + 0.5:
+            action_taken = True
+            state_1, state_2 = state_template.get_states_from_sim(sim)
+            player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
+            player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
+            ret = list(map(lambda x: (0, x), player_1))
+            ret.extend(map(lambda x: (1, x), player_2))
+            last_input = ret
+            last_time = time
+
+        return last_input
 
     return inputs_function_nn
 
 
 def _get_post_tick_function(sim: simulation.Simulation):
     def post_tick_function():
-        new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
-        reward_1 = sim.get_current_reward(0)
-        reward_2 = sim.get_current_reward(1)
-        pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
+        global action_taken
+
+        if action_taken:
+            new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
+            reward_1 = sim.get_current_reward(0)
+            reward_2 = sim.get_current_reward(1)
+            pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
 
     return post_tick_function
 
