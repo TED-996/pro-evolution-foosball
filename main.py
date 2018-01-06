@@ -5,6 +5,7 @@ from ai.ai import AI
 from ai.state_template import StateTemplate
 import json
 import random
+import math
 
 
 conf = {}
@@ -30,6 +31,7 @@ def load():
 
 
 def save():
+    print("saving...")
     global pef_brain
     if pef_brain is not None:
         pef_brain.save()
@@ -65,7 +67,7 @@ def main():
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
     state_template = StateTemplate(sim)  # see better place (bogdan)
-    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim))
+    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), save)
 
 
 def _get_inputs_function(sim: simulation.Simulation):
@@ -114,6 +116,8 @@ def _get_post_tick_function(sim: simulation.Simulation):
         new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
         reward_1 = sim.get_current_reward(0)
         reward_2 = sim.get_current_reward(1)
+        # print("Player1's reward is {} and Player2's reward is {}".format(reward_1, reward_2))
+        # print("Ball direction: ", math.atan2(sim.state.ball[1].imag, sim.state.ball[1].real))
         pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
 
     return post_tick_function
