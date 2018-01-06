@@ -12,7 +12,7 @@ class AI:
                  rods_number: int = 0,
                  offset=None,
                  angle_velocity=None,
-                 hidden_layers=(100, 100),
+                 hidden_layers=(100, 200, 100),
                  nn_file: str = "save.model",
                  actions_file: str = "save.actions"):
         """
@@ -30,12 +30,12 @@ class AI:
         self.last_predictions = []
         self.last_states = []
         self.last_actions_index = []
-        self.lamda = 0.9  # TODO adjust
-        self.alpha = 0.2  # TODO adjust
-        self.epsilon = 0.25  # greedy policy
+        self.lamda = 0.6  # TODO adjust
+        self.alpha = 0.8  # TODO adjust
+        self.epsilon = 0.70  # greedy policy
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
-        self.__decreasing_rate = 0.992
+        self.__decreasing_rate = 0.9997
         if load:
             self.__load(nn_file, actions_file)
             return
@@ -59,6 +59,7 @@ class AI:
 
     def save(self, nn_file: str="save.model", actions_file: str="save.actions"):
         self.model.save(nn_file)
+        print("saving ai...")
         fd = open(actions_file, "wb")
         to_save = (self.rods_number, self.actions)
         pickle.dump(to_save, fd, protocol=0)  # protocol 0 for compatibility
@@ -108,10 +109,10 @@ class AI:
         self.__compute_and_backup(state)
 
         if random() < self.epsilon:  # should choose an action random
+            self.epsilon *= self.__decreasing_rate
             self.last_actions_index.append(action_selector(True, None))
             return [self.actions[i] for i in self.last_actions_index[-1]]
 
-        self.epsilon *= self.__decreasing_rate
         self.last_actions_index.append(action_selector(False, self.last_predictions[-1]))
         return [self.actions[i] for i in self.last_actions_index[-1]]
 
@@ -128,7 +129,7 @@ class AI:
         for i in range(len(new_states)):
             next_max_q_values = action_selector(self.model.predict_action(new_states[i]))
 
-            q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward[i] + next_q)
+            q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward[i] + self.lamda * next_q)
                                 for q, next_q
                                 in zip(q_values[i], next_max_q_values)]
 
@@ -138,6 +139,8 @@ class AI:
         self.last_states.clear()
         self.last_actions_index.clear()
         self.last_predictions.clear()
+        # we trust more in next move when network learn more
+        self.lamda += self.lamda * 1.e-7
 
     def predict_action(self, state, action_selector):
         actions_idxs = action_selector(self.model.predict_action(state))

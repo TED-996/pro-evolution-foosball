@@ -2,12 +2,11 @@ from sim import simulation
 import pymunk
 import pymunk.pygame_util
 import pygame
-from main import save
 
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_function, post_tick_function, save=save):
+def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)

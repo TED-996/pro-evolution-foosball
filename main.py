@@ -5,6 +5,7 @@ from ai.ai import AI
 from ai.state_template import StateTemplate
 import json
 import random
+import math
 
 
 conf = {}
@@ -30,6 +31,7 @@ def load():
 
 
 def save():
+    print("saving...")
     global pef_brain
     if pef_brain is not None:
         pef_brain.save()
@@ -65,7 +67,7 @@ def main():
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
     state_template = StateTemplate(sim)  # see better place (bogdan)
-    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim))
+    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), save)
 
 
 last_input = None

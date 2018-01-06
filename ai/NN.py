@@ -1,7 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
-from numpy import array
+from numpy import array, expand_dims
 
 
 class NN:
@@ -31,8 +31,7 @@ class NN:
         nn_layers = [Dense(units=hidden_layers[0],
                            activation="sigmoid",
                            input_dim=input_dim),
-                     Dense(units=output_dim,
-                           activation="relu")]
+                     Dense(units=output_dim)]
         # if there are more hidden layers, add them before last layer
         for layer_size in range(1, len(hidden_layers)):
             nn_layers.insert(-1, Dense(units=layer_size,
@@ -57,7 +56,7 @@ class NN:
             return
         self.compiled = True
         self.model.compile(optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),
-                           loss="categorical_crossentropy",
+                           loss="mean_squared_error",
                            metrics=["accuracy"])
 
     def predict_action(self, state):
@@ -72,4 +71,6 @@ class NN:
         :param state: input of the model
         :param target: output of the model
         """
+#        for i in range(len(target)):
+#            target[i] = expand_dims(target[i], -1)
         self.model.train_on_batch(array(state), array(target))
