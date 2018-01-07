@@ -26,6 +26,7 @@ class Simulation:
         self.reset()
 
         self.on_goal = []
+        self.on_oob = []
 
     def reset(self):
         self.state = self.table_info.get_init_state()
@@ -96,6 +97,8 @@ class Simulation:
         else:
             ordered = reversed(self.table_info.rods)
             idxs = range(len(self.table_info.rods) - 1, -1, -1)
+            offset_vel = -offset_vel
+            angle_vel = -angle_vel
 
         # Find the rod_idx-th rod in the player's order
         # The player's rods are those with side == rod[0]
@@ -114,6 +117,7 @@ class Simulation:
         self.space.step(time)
         self._fetch_state()
         self._check_on_goal()
+        self._check_oob()
 
         # _assert_no_nans(self.space)
 
@@ -138,8 +142,14 @@ class Simulation:
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
 
         extra_score = 0
-        if abs(self.state.ball[1]) < 0.1:
-            extra_score = -50  # penalty for inert state of the ball
+        if abs(self.state.ball[1]) < 0.0001:
+            extra_score -= 900
+        elif abs(self.state.ball[1]) < 0.1:
+            extra_score -= min(5 / abs(self.state.ball[1]), 900)  # penalty for inert state of the ball
+        # punish OOB
+        if not self.table_info.get_inbounds(self.state.ball[0]):
+            extra_score -= 2000
+
 
         # return a score that is a sum of:
         #   how far is the ball from goal of player
@@ -158,6 +168,15 @@ class Simulation:
     def _on_goal(self, side):
         for handler in self.on_goal:
             handler(side)
+
+    def _check_oob(self):
+        if not self.table_info.get_inbounds(self.state.ball[0]):
+            self._on_oob()
+
+    def _on_oob(self):
+        for handler in self.on_oob:
+            handler()
+
 
 
 def _inverse_list(items, key):

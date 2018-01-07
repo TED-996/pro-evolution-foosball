@@ -20,7 +20,22 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
                  (screen.get_height() - table.get_height()) / 2)
 
     rod_owners = sim.get_rod_owners()
-    sim.on_goal.append(lambda _: sim.reset())
+
+
+    reset_deferred = False
+
+    def defer_reset():
+        nonlocal reset_deferred
+        reset_deferred = True
+
+    def check_defer_reset():
+        nonlocal reset_deferred
+        if reset_deferred:
+            sim.reset()
+            reset_deferred = False
+
+    sim.on_goal.append(lambda _: defer_reset())
+    sim.on_oob.append(lambda: defer_reset())
 
     speed = 1
     max_speed = 100
@@ -51,6 +66,8 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
             sim.tick(tick_s)
 
             post_tick_function()
+
+            check_defer_reset()
 
         screen.fill((0, 0, 0))
         table.fill((0, 0, 0))

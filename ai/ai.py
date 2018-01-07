@@ -140,8 +140,14 @@ class AI:
         self.last_actions_index.clear()
         self.last_predictions.clear()
         # we trust more in next move when network learn more
-        self.lamda += self.lamda * 1.e-7
+        self.lamda += self.lamda * 1.e-5
+        if self.lamda > 1:
+            self.lamda = 1
 
     def predict_action(self, state, action_selector):
         actions_idxs = action_selector(self.model.predict_action(state))
         return [self.actions[i] for i in actions_idxs]
+
+    def flush_last_actions(self):
+        # TODO TODO TODO
+        pass

@@ -231,3 +231,7 @@ class TableInfo:
         if x > self.length:
             return 1
         return None
+
+    def get_inbounds(self, position, threshold=0.1):
+        x, y = position.real, position.imag
+        return -threshold <= x <= self.length + threshold and -threshold <= y <= 1 + threshold
