@@ -109,9 +109,9 @@ def _get_post_tick_function(sim: simulation.Simulation):
 
         if action_taken:
             new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
-            reward_1 = sim.get_current_reward(0)
-            reward_2 = sim.get_current_reward(1)
-            pef_brain.update([reward_1 - last_reward_1, reward_2 - last_reward_2],
+            reward_1, penalty_1 = sim.get_current_reward(0)
+            reward_2, penalty_2 = sim.get_current_reward(1)
+            pef_brain.update([reward_1 - last_reward_1 + penalty_1, reward_2 - last_reward_2 + penalty_2],
                              [new_state_1, new_state_2])
 
             last_reward_1 = reward_1
@@ -144,37 +144,37 @@ def _get_table_info():
                 "owner": 0,
                 "x": 0.35,
                 "foo_count": 2,
-                "foo_spacing": 1/3
+                "foo_spacing": 1 / 2
             },
             {
                 "owner": 1,
                 "x": 0.6,
                 "foo_count": 3,
-                "foo_spacing": 1/4
+                "foo_spacing": 1 / 3
             },
             {
                 "owner": 0,
                 "x": 0.9,
                 "foo_count": 5,
-                "foo_spacing": 1/6
+                "foo_spacing": 1/5
             },
             {
                 "owner": 1,
                 "x": length - 0.9,
                 "foo_count": 5,
-                "foo_spacing": 1 / 6
+                "foo_spacing": 1/5
             },
             {
                 "owner": 0,
                 "x": length - 0.6,
                 "foo_count": 3,
-                "foo_spacing": 1 / 4
+                "foo_spacing": 1/3
             },
             {
                 "owner": 1,
                 "x": length - 0.35,
                 "foo_count": 2,
-                "foo_spacing": 1 / 3
+                "foo_spacing": 1/2
             },
             {
                 "owner": 1,

@@ -3,6 +3,7 @@ from itertools import product
 from ai.NN import NN
 import pickle
 from random import random, randrange
+from collections import deque
 
 
 class AI:
@@ -13,6 +14,7 @@ class AI:
                  offset=None,
                  angle_velocity=None,
                  hidden_layers=(100, 200, 100),
+                 log_size=10,
                  nn_file: str = "save.model",
                  actions_file: str = "save.actions"):
         """
@@ -27,11 +29,13 @@ class AI:
         """
         self.actions = None
         self.model = None
-        self.last_predictions = []
-        self.last_states = []
-        self.last_actions_index = []
-        self.lamda = 0.6  # TODO adjust
-        self.alpha = 0.8  # TODO adjust
+        self.last_predictions = deque(maxlen=2 * log_size)
+        self.last_states = deque(maxlen=2 * log_size)
+        self.last_actions_index = deque(maxlen=2 * log_size)
+        self.last_reward_sums = deque([0, 0], maxlen=2 * log_size + 2)
+        self.log_size = log_size
+        self.lamda = 0.6
+        self.alpha = 0.8
         self.epsilon = 0.4  # greedy policy
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
@@ -69,6 +73,7 @@ class AI:
         self.last_predictions.append(self.model.predict_action(state))
         self.last_states.append(state)
 
+    # noinspection PyMethodMayBeStatic
     def one_action(self, q_values):
         return [argmax(q_values)]
 
@@ -85,7 +90,6 @@ class AI:
         :param action_selector: may be one of the following functions: ane_action, multiple_actions
         :return:
         """
-        # TODO see if state need modification to be a vector with 1 dimension
         self.__compute_and_backup(state)
         self.last_actions_index.append(action_selector(self.last_predictions[-1]))
         return [self.actions[i] for i in self.last_actions_index[-1]]
@@ -118,29 +122,45 @@ class AI:
 
     def update(self, action_based_reward, new_states):
         assert len(action_based_reward) == len(new_states), "must have reward for each new_state"
-        assert len(new_states) == len(self.last_actions_index), \
-            "must have the same amount of new_states as {}".format(len(self.last_actions_index))
+        assert len(action_based_reward) == 2, "exactly 2 players supported ATM"
+
+        for idx in range(0, len(self.last_reward_sums), 2):
+            self.last_reward_sums[idx] += action_based_reward[0]
+            self.last_reward_sums[idx + 1] += action_based_reward[1]
+
+        self.last_reward_sums.extend(action_based_reward)
 
         q_values = [[self.last_predictions[i][j]
                     for j in self.last_actions_index[i]]
                     for i in range(len(self.last_actions_index))]
         action_selector = self.one_action if len(q_values[0]) == 1 else self.multiple_actions
 
-        for i in range(len(new_states)):
-            next_max_q_values = action_selector(self.model.predict_action(new_states[i]))
-
-            q_values_updated = [(1 - self.alpha) * q + self.alpha * (action_based_reward[i] + self.lamda * next_q)
-                                for q, next_q
-                                in zip(q_values[i], next_max_q_values)]
+        for i in range(len(q_values) - 2):
+            next_q_values = q_values[i + 2]
+            q_values_updated = [
+                # TODO: not sure about self.last_rewards[i]
+                (1 - self.alpha) * q + self.alpha * (self.last_reward_sums[i] + self.lamda * next_q)
+               for q, next_q
+               in zip(q_values[i], next_q_values)]
 
             for j, update in zip(self.last_actions_index[i], q_values_updated):
                 self.last_predictions[i][j] = update
+
+        for i in range(len(new_states)):
+            next_max_q_values = action_selector(self.model.predict_action(new_states[i]))
+
+            q_values_updated = [
+                (1 - self.alpha) * q + self.alpha * (action_based_reward[i] + self.lamda * next_q)
+                for q, next_q
+                in zip(q_values[-2 + i], next_max_q_values)]
+
+            for j, update in zip(self.last_actions_index[-2 + i], q_values_updated):
+                self.last_predictions[-2 + i][j] = update
+
         self.model.update(self.last_states, self.last_predictions)
-        self.last_states.clear()
-        self.last_actions_index.clear()
-        self.last_predictions.clear()
+
         # we trust more in next move when network learn more
-        self.lamda += self.lamda * 1.e-5
+        self.lamda += self.lamda * 1.e-7
         if self.lamda > 1:
             self.lamda = 1
 

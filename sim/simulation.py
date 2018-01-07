@@ -139,28 +139,33 @@ class Simulation:
         # check for goal for player
         if player_starting_point <= (((-1) ** (1 ^ player)) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
-            return 1000
+            return 1000, 0
         # check for goal for opponent
         if ((1 ^ player) * self.table_info.length) <= (((-1) ** player) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
-            return -1000
+            return -1000, -1000
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
 
-        extra_score = 0
+        penalty = 0
         if abs(self.state.ball[1]) < 0.0001:
-            extra_score -= 900
+            penalty -= 5
         elif abs(self.state.ball[1]) < 0.1:
-            extra_score -= min(5 / abs(self.state.ball[1]), 900)  # penalty for inert state of the ball
+            penalty -= min(0.1 / abs(self.state.ball[1]), 5)  # penalty for inert state of the ball
         # punish OOB
         if not self.table_info.get_inbounds(self.state.ball[0]):
-            extra_score -= 2000
-
+            penalty -= 2000
 
         # return a score that is a sum of:
         #   how far is the ball from goal of player
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
-        return abs(player_starting_point - self.state.ball[0].real) + \
-            abs(player_starting_point - self.state.ball[0].real) / 2 * ball_direction + extra_score
+        dist_from_goal = abs(player_starting_point - self.state.ball[0].real)
+        dist_to_goal = self.table_info.length - dist_from_goal
+
+        if dist_to_goal < dist_from_goal:
+            # has advantage
+            return dist_from_goal / dist_to_goal * 10, penalty
+        # ball is in my half and it will by bad if direction of ball is toward me
+        return ball_direction * dist_from_goal / dist_to_goal * 10, penalty
 
     def get_rod_owners(self):
         return [r[0] for r in self.table_info.rods]
