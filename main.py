@@ -22,9 +22,9 @@ def main():
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
 
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
-    sim.on_goal.append(lambda side: pef_brain.flush_last_actions())
     sim.on_oob.append(lambda: print("WARNING: OOB, resetting"))
-    sim.on_oob.append(lambda: pef_brain.flush_last_actions())
+
+    sim.on_reset.append(lambda: pef_brain.flush_last_actions())
 
     state_template = StateTemplate(sim)  # see better place (bogdan)
 
@@ -61,23 +61,6 @@ def get_actions(sim: simulation.Simulation):
         pef_brain.predict_action(state_2, pef_brain.multiple_actions)
 
 
-def act_and_update_template(sim: simulation.Simulation):
-    # THIS FUNCTION IS JUST A TEMPLATE FOR HOW TO INTERACT WITH AI
-    # while loop
-    state_1, state_2 = state_template.get_states_from_sim(sim)
-    player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
-    player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
-
-    # apply input (player_1 and player_2) to sim
-    # update gui
-
-    new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
-    reward_1 = sim.get_current_reward(0)
-    reward_2 = sim.get_current_reward(1)
-    pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
-    # end loop
-
-
 last_input = None
 action_taken = None
 
@@ -106,23 +89,42 @@ def _get_inputs_function(sim: simulation.Simulation):
             ret = list(map(lambda x: (0, x), player_1))
             ret.extend(map(lambda x: (1, x), player_2))
             last_input = ret
-            next_time = time + random.random() * 0.4 + 0.1
+            next_time = time + 0.25
             # print("action taken")
 
         return last_input
+        # return []
 
     return inputs_function_nn
 
 
 def _get_post_tick_function(sim: simulation.Simulation):
+    last_reward_1 = 0
+    last_reward_2 = 0
+
     def post_tick_function():
         global action_taken
+        nonlocal last_reward_1
+        nonlocal last_reward_2
 
         if action_taken:
             new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
             reward_1 = sim.get_current_reward(0)
             reward_2 = sim.get_current_reward(1)
-            pef_brain.update([reward_1, reward_2], [new_state_1, new_state_2])
+            pef_brain.update([reward_1 - last_reward_1, reward_2 - last_reward_2],
+                             [new_state_1, new_state_2])
+
+            last_reward_1 = reward_1
+            last_reward_2 = reward_2
+
+    def on_reset():
+        nonlocal last_reward_1
+        nonlocal last_reward_2
+
+        last_reward_1 = 0
+        last_reward_2 = 0
+
+    sim.on_reset.append(on_reset)
 
     return post_tick_function
 

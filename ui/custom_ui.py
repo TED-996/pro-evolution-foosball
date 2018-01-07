@@ -63,6 +63,9 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
         for _ in range(speed):
             for side, input in inputs_function(tick_s):
                 sim.apply_inputs(side, input)
+            for side, input in _get_key_inputs(sim):
+                sim.apply_inputs(side, input)
+
             sim.tick(tick_s)
 
             post_tick_function()
@@ -72,7 +75,7 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
         screen.fill((0, 0, 0))
         table.fill((0, 0, 0))
 
-        _draw(sim.ball_body, sim.rod_bodies, rod_owners, sim.goal_bodies, sim.side_bodies, table)
+        _draw(sim, sim.ball_body, sim.rod_bodies, rod_owners, sim.goal_bodies, sim.side_bodies, table)
         screen.blit(table, table_pos)
 
         _draw_fps(1 / tick_s, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
@@ -84,7 +87,7 @@ def r_int(value):
     return int(round(value))
 
 
-def _draw(ball, rods, rod_owners, goals, sides, surface: pygame.Surface):
+def _draw(sim: simulation.Simulation, ball, rods, rod_owners, goals, sides, surface: pygame.Surface):
     ball_shape, = ball.shapes
     assert isinstance(ball_shape, pymunk.Circle)
     _draw_circle(ball_shape, (50, 50, 255), surface, _scale)
@@ -104,6 +107,44 @@ def _draw(ball, rods, rod_owners, goals, sides, surface: pygame.Surface):
             assert isinstance(shape, pymunk.Poly)
             _draw_poly(shape, color, surface, _scale)
 
+    for rod in sim.table_info.rods:
+        x = rod[1]
+        _draw_line((x, 0), (x, 1), 0.005, (200, 200, 200, 50), surface, _scale)
+
+
+def _get_key_inputs(sim: simulation.Simulation):
+    keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4,
+            pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8,
+            pygame.K_9, pygame.K_0]
+
+    pressed = pygame.key.get_pressed()
+    mouse_rel = pygame.mouse.get_rel()
+    move_x = mouse_rel[0]
+    move_y = mouse_rel[1] / 20
+
+    inputs = []
+
+    rods = [
+        (0, 0),
+        (0, 1),
+        (1, 3),
+        (0, 2),
+        (1, 2),
+        (0, 3),
+        (1, 1),
+        (1, 0)
+    ]
+
+    for (rod_o, rod_idx), k in zip(rods, keys):
+        if pressed[k]:
+            # Move rod idx
+            if rod_o == 1:
+                inputs.append((1, (rod_idx, -move_y, -move_x)))
+            else:
+                inputs.append((0, (rod_idx, move_y, move_x)))
+
+    return inputs
+
 
 def _get_table_surface(sim: simulation.Simulation):
     x = r_int(sim.table_info.length * _scale)
@@ -118,6 +159,14 @@ def _draw_segment(segment: pymunk.Segment, color, surface, scale):
     a = (r_int(orig_a[0] * scale), r_int(orig_a[1] * scale))
     b = (r_int(orig_b[0] * scale), r_int(orig_b[1] * scale))
     r = r_int(segment.radius * scale) or 1
+
+    pygame.draw.line(surface, color, a, b, r)
+
+
+def _draw_line(line_from, line_to, radius, color, surface, scale):
+    a = (r_int(line_from[0] * scale), r_int(line_from[1] * scale))
+    b = (r_int(line_to[0] * scale), r_int(line_to[1] * scale))
+    r = r_int(radius * scale) or 1
 
     pygame.draw.line(surface, color, a, b, r)
 

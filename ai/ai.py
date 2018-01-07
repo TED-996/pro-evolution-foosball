@@ -32,7 +32,7 @@ class AI:
         self.last_actions_index = []
         self.lamda = 0.6  # TODO adjust
         self.alpha = 0.8  # TODO adjust
-        self.epsilon = 0.70  # greedy policy
+        self.epsilon = 0.4  # greedy policy
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
         self.__decreasing_rate = 0.9997
@@ -149,5 +149,6 @@ class AI:
         return [self.actions[i] for i in actions_idxs]
 
     def flush_last_actions(self):
-        # TODO TODO TODO
-        pass
+        self.last_states.clear()
+        self.last_actions_index.clear()
+        self.last_predictions.clear()

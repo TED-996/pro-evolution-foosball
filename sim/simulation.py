@@ -23,10 +23,12 @@ class Simulation:
         self.side_bodies: [pymunk.Body] = None
         self.rod_body_idx_cache: {pymunk.Body: int} = None
 
+        self.on_reset = []
         self.reset()
 
         self.on_goal = []
         self.on_oob = []
+
 
     def reset(self):
         self.state = self.table_info.get_init_state()
@@ -45,6 +47,8 @@ class Simulation:
         self.rod_body_idx_cache = _inverse_list(self.rod_bodies, key=id)
         self._hook_velocities()
 
+        self._on_reset()
+
     # noinspection PyUnusedLocal
     def _get_rod_velocity(self, body: pymunk.Body, gravity, damping, dt):
         rod_idx = self.rod_body_idx_cache[id(body)]
@@ -53,19 +57,20 @@ class Simulation:
         angle, angle_vel = rod[1]
         max_offset = self.table_info.rods[rod_idx][4]
 
-        next_foo_x = self.table_info.get_rod_x(rod_idx, angle + angle_vel * dt)
-        vel_x = (next_foo_x - body.position[0]) / dt
+        next_foo_x = self.table_info.get_rod_x(rod_idx, angle + angle_vel * dt / 2)
+        vel_x = (next_foo_x - body.position[0]) / dt / 2
 
         a_offset = self.table_info.get_rod_offset(rod_idx, body.position[1])
         if a_offset < 0 and offset_vel < 0:
             offset_vel = 0
-        if a_offset > max_offset and offset_vel > 0:
+        if a_offset > 1 and offset_vel > 0:
             offset_vel = 0
 
         vel_y = offset_vel
         # vel_y = 0
 
         # return vel_x, vel_y
+
         body.velocity = (vel_x, vel_y)
 
     def _hook_velocities(self):
@@ -177,6 +182,9 @@ class Simulation:
         for handler in self.on_oob:
             handler()
 
+    def _on_reset(self):
+        for handler in self.on_reset:
+            handler()
 
 
 def _inverse_list(items, key):
