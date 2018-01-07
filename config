@@ -1,6 +1,6 @@
 {
     "state_size": 60,
     "rods_number": 4,
-    "offset": [0.2, 0.1, 0.0, -0.1, -0.2],
-    "angle_velocity": [3, 1, 0.0, -1, -3]
+    "offset": [0.9, 0.4, 0.0, -0.4, -0.9],
+    "angle_velocity": [7, 3, 0.0, -3, -7]
 }

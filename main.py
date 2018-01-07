@@ -39,7 +39,8 @@ def load_from_config():
                    state_size=conf["state_size"],
                    rods_number=conf["rods_number"],
                    offset=conf["offset"],
-                   angle_velocity=conf["angle_velocity"])  # see hidden layers field
+                   angle_velocity=conf["angle_velocity"],
+                   log_size=45)  # see hidden layers field
     fd.close()
 
 
@@ -89,7 +90,7 @@ def _get_inputs_function(sim: simulation.Simulation):
             ret = list(map(lambda x: (0, x), player_1))
             ret.extend(map(lambda x: (1, x), player_2))
             last_input = ret
-            next_time = time + 0.25
+            next_time = time + 0.15
             # print("action taken")
 
         return last_input
