@@ -1,4 +1,5 @@
 from sim.simulation import Simulation
+from numpy import array
 
 
 class StateTemplate:
@@ -56,3 +57,48 @@ class StateTemplate:
             state_2.extend(ai_rod)
 
         return state_1, state_2
+
+
+class StateTemplatev2:
+
+    def __init__(self, sim: Simulation):
+        self.foosmans = []
+        self.rev_foosmans = []
+
+        table_length = sim.table_info.length
+
+        for rod in sim.table_info.rods:
+            _, x, foo_count, foo_dist, foo_offset = rod
+            self.foosmans.append((x,
+                                  self.get_foosmans_weight_center(foo_count, foo_dist)))
+            self.rev_foosmans.insert(0, (table_length - x,
+                                         self.get_foosmans_weight_center(foo_count,
+                                                                         foo_dist)
+                                         ))
+        self.max_position = complex(table_length, 1)
+
+    @staticmethod
+    def __complex_to_tuple(c: complex):
+        return c.real, c.imag
+
+    def get_foosmans_weight_center(self, foo_count, foo_dist):
+        if foo_dist == 0:
+            return array([0.5])
+        return array([(i + 1) * foo_dist for i in range(foo_count)])
+
+    def apply_offset(self, player, offsets):
+        # offsets must be in order from goal to middle
+        rods = None
+        if player == 0:
+            nonlocal rods
+            rods = self.foosmans
+        else:
+            nonlocal rods
+            rods = self.rev_foosmans
+        for offset, rod in zip(offsets, rods):
+            if offset < 0:
+                possible_offset = min(rod[1][0], abs(offset))
+                rod[1] -= possible_offset
+            else:
+                possible_offset = min(1 - rod[1][-1], offset)
+                rod[1] += possible_offset

@@ -39,7 +39,7 @@ class AI:
         self.epsilon = 0.4  # greedy policy
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
-        self.__decreasing_rate = 0.9997
+        self.__decreasing_rate = 0.99997
         if load:
             self.__load(nn_file, actions_file)
             return
