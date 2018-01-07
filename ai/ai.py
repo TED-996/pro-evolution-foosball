@@ -58,14 +58,14 @@ class AI:
     def __load(self, nn_file, actions_file):
         self.model = NN(load_file=nn_file)
         fd = open(actions_file, "rb")
-        self.rods_number, self.actions = pickle.load(fd)
+        self.rods_number, self.actions, self.epsilon, self.lamda = pickle.load(fd)
         fd.close()
 
     def save(self, nn_file: str="save.model", actions_file: str="save.actions"):
         self.model.save(nn_file)
         print("saving ai...")
         fd = open(actions_file, "wb")
-        to_save = (self.rods_number, self.actions)
+        to_save = (self.rods_number, self.actions, self.epsilon, self.lamda)
         pickle.dump(to_save, fd, protocol=0)  # protocol 0 for compatibility
         fd.close()
 
@@ -139,7 +139,8 @@ class AI:
             next_q_values = q_values[i + 2]
             q_values_updated = [
                 # TODO: not sure about self.last_rewards[i]
-                (1 - self.alpha) * q + self.alpha * (self.last_reward_sums[i] + self.lamda * next_q)
+                (1 - self.alpha) * q + self.alpha * (self.last_reward_sums[i]
+                    + (self.lamda ** ((len(q_values) + 1 - i) // 2 + 1)) * next_q)
                for q, next_q
                in zip(q_values[i], next_q_values)]
 
