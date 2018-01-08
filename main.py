@@ -118,8 +118,6 @@ def _get_post_tick_function(sim: simulation.Simulation):
             reward_1, penalty_1 = sim.get_current_reward(0)
             reward_2, penalty_2 = sim.get_current_reward(1)
 
-            print(reward_1, penalty_1)
-
             pef_brain.update([reward_1 - last_reward_1 + penalty_1, reward_2 - last_reward_2 + penalty_2],
                              [new_state_1, new_state_2])
 

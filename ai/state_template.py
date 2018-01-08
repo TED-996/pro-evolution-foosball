@@ -90,10 +90,8 @@ class StateTemplatev2:
         # offsets must be in order from goal to middle
         rods = None
         if player == 0:
-            nonlocal rods
             rods = self.foosmans
         else:
-            nonlocal rods
             rods = self.rev_foosmans
         for offset, rod in zip(offsets, rods):
             if offset < 0:

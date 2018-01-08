@@ -18,6 +18,7 @@ class NN:
         """
         if load_file is not None:
             self.__load(load_file)
+            self.compiled = True
             return
         assert len(hidden_layers) > 0, "NN must contain at least one hidden layer"
         assert output_dim > 0, "NN must contain at least one unit on output layer "
