@@ -2,7 +2,7 @@ from ui import custom_ui
 from sim import simulation
 from sim import table
 from ai.ai import AI
-from ai.state_template import StateTemplate
+from ai.state_template import StateTemplate, StateTemplatev2
 import json
 import random
 import math
@@ -31,8 +31,8 @@ def main():
 
     sim.on_reset.append(lambda: pef_brain.flush_last_actions())
 
-    state_template = StateTemplate(sim)  # see better place (bogdan)
-
+    state_template = StateTemplatev2(sim)  # see better place (bogdan)
+    sim.on_reset.append(state_template.reset)
     custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), save)
 
 
