@@ -207,5 +207,5 @@ venv.bak/
 
 # End of https://www.gitignore.io/api/python,pycharm,pycharm+all
 
-save.actions
-save.model
+/save.actions
+/save.model
