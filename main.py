@@ -63,9 +63,11 @@ def save():
 
 def get_actions(sim: simulation.Simulation):
     state_1, state_2 = state_template.get_states_from_sim(sim)
-    return pef_brain.predict_action(state_1, pef_brain.multiple_actions), \
-        pef_brain.predict_action(state_2, pef_brain.multiple_actions)
-
+    player_1 = pef_brain.predict_action(state_1, pef_brain.multiple_actions)
+    player_2 = pef_brain.predict_action(state_2, pef_brain.multiple_actions)
+    ret = list(map(lambda x: (0, x), player_1))
+    ret.extend(map(lambda x: (1, x), player_2))
+    return ret
 
 last_input = None
 action_taken = None
@@ -100,8 +102,10 @@ def _get_inputs_function(sim: simulation.Simulation):
 
         return last_input
         # return []
-
-    return inputs_function_nn
+    if "--no-train" not in sys.argv:
+        return inputs_function_nn
+    else:
+        return lambda _: get_actions(sim)
 
 
 def _get_post_tick_function(sim: simulation.Simulation):
@@ -117,8 +121,6 @@ def _get_post_tick_function(sim: simulation.Simulation):
             new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
             reward_1, penalty_1 = sim.get_current_reward(0)
             reward_2, penalty_2 = sim.get_current_reward(1)
-
-            print(reward_1, penalty_1)
 
             pef_brain.update([reward_1 - last_reward_1 + penalty_1, reward_2 - last_reward_2 + penalty_2],
                              [new_state_1, new_state_2])

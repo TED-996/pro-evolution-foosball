@@ -35,8 +35,8 @@ class AI:
         self.last_reward_sums = deque([0, 0], maxlen=2 * log_size + 2)
         self.log_size = log_size
         self.lamda = 0.6
-        self.alpha = 0.8
-        self.epsilon = 0.4  # greedy policy
+        self.alpha = 0.9
+        self.epsilon = 0.5  # greedy policy
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
         self.__decreasing_rate = 0.99997
@@ -113,6 +113,8 @@ class AI:
         self.__compute_and_backup(state)
 
         if random() < self.epsilon:  # should choose an action random
+            if self.epsilon < 0.1:
+                print("random choice; epsilon = {}".format(self.epsilon))
             self.epsilon *= self.__decreasing_rate
             self.last_actions_index.append(action_selector(True, None))
             return [self.actions[i] for i in self.last_actions_index[-1]]
@@ -163,6 +165,7 @@ class AI:
         # we trust more in next move when network learn more
         self.lamda += self.lamda * 1.e-7
         if self.lamda > 1:
+            print("lambda = {}".format(self.lamda))
             self.lamda = 1
 
     def predict_action(self, state, action_selector):

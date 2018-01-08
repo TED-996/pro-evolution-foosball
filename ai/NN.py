@@ -29,13 +29,13 @@ class NN:
     def __build_stack_of_layers(input_dim, hidden_layers, output_dim):
         # add first and last layer in network
         nn_layers = [Dense(units=hidden_layers[0],
-                           activation="sigmoid",
+                           activation="relu",
                            input_dim=input_dim),
                      Dense(units=output_dim)]
         # if there are more hidden layers, add them before last layer
         for layer_size in range(1, len(hidden_layers)):
             nn_layers.insert(-1, Dense(units=layer_size,
-                                       activation="sigmoid"))
+                                       activation="relu"))
         return nn_layers
 
     def __load(self, load_file):

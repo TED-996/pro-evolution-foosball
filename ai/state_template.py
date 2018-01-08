@@ -75,9 +75,6 @@ class StateTemplatev2:
                                          self.get_foosmans_positions(foo_count,
                                                                      foo_dist)
                                          ])
-        print("foosmans = {}\n"
-              "rev_foosmans = {}"
-              .format(self.foosmans, self.rev_foosmans))
         self.max_position = complex(table_length, 1)
 
     @staticmethod
