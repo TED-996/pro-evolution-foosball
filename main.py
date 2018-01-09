@@ -29,6 +29,7 @@ def main():
     sim.on_goal.append(lambda side: print("Goal for {}".format(side)))
     sim.on_oob.append(lambda: print("WARNING: OOB, resetting"))
 
+    sim.on_reset.append(lambda: print("Resetting board"))
     sim.on_reset.append(lambda: pef_brain.flush_last_actions())
 
     state_template = StateTemplatev2(sim)  # see better place (bogdan)
@@ -69,8 +70,8 @@ def get_actions(sim: simulation.Simulation):
     ret.extend(map(lambda x: (1, x), player_2))
     return ret
 
+
 last_input = None
-action_taken = None
 
 def _get_inputs_function(sim: simulation.Simulation):
     time = 0
@@ -83,22 +84,15 @@ def _get_inputs_function(sim: simulation.Simulation):
         nonlocal time
         nonlocal next_time
         global last_input
-        global action_taken
 
         time += dt
 
-        action_taken = False
-
-        if last_input is None or time >= next_time:
-            action_taken = True
-            state_1, state_2 = state_template.get_states_from_sim(sim)
-            player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
-            player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
-            ret = list(map(lambda x: (0, x), player_1))
-            ret.extend(map(lambda x: (1, x), player_2))
-            last_input = ret
-            next_time = time + 0.15
-            # print("action taken")
+        state_1, state_2 = state_template.get_states_from_sim(sim)
+        player_1 = pef_brain.get_action_off_policy(state_1, pef_brain.multiple_actions_off_policy)
+        player_2 = pef_brain.get_action_off_policy(state_2, pef_brain.multiple_actions_off_policy)
+        ret = list(map(lambda x: (0, x), player_1))
+        ret.extend(map(lambda x: (1, x), player_2))
+        last_input = ret
 
         return last_input
         # return []
@@ -113,20 +107,18 @@ def _get_post_tick_function(sim: simulation.Simulation):
     last_reward_2 = 0
 
     def post_tick_function():
-        global action_taken
         nonlocal last_reward_1
         nonlocal last_reward_2
 
-        if action_taken:
-            new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
-            reward_1, penalty_1 = sim.get_current_reward(0)
-            reward_2, penalty_2 = sim.get_current_reward(1)
+        new_state_1, new_state_2 = state_template.get_states_from_sim(sim)
+        reward_1, penalty_1 = sim.get_current_reward(0)
+        reward_2, penalty_2 = sim.get_current_reward(1)
 
-            pef_brain.update([reward_1 - last_reward_1 + penalty_1, reward_2 - last_reward_2 + penalty_2],
-                             [new_state_1, new_state_2])
+        pef_brain.update([reward_1 - last_reward_1 + penalty_1, reward_2 - last_reward_2 + penalty_2],
+                         [new_state_1, new_state_2])
 
-            last_reward_1 = reward_1
-            last_reward_2 = reward_2
+        last_reward_1 = reward_1
+        last_reward_2 = reward_2
 
     def on_reset():
         nonlocal last_reward_1

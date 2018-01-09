@@ -141,8 +141,8 @@ class AI:
             next_q_values = q_values[i + 2]
             q_values_updated = [
                 # TODO: not sure about self.last_rewards[i]
-                (1 - self.alpha) * q + self.alpha * (self.last_reward_sums[i]
-                    + (self.lamda ** ((len(q_values) + 1 - i) // 2 + 1)) * next_q)
+                (1 - self.alpha) * q + self.alpha * (self.last_reward_sums[i] / ((len(q_values) + 1 - i) // 2)
+                    + (self.lamda * next_q))
                for q, next_q
                in zip(q_values[i], next_q_values)]
 

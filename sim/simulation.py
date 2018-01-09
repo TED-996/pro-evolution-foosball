@@ -137,13 +137,20 @@ class Simulation:
         half_goal = self.table_info.goal_width / 2
         player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
         # check for goal for player
+
         if player_starting_point <= (((-1) ** (1 ^ player)) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
+            print("goal for current player")
             return 1000, 0
         # check for goal for opponent
         if ((1 ^ player) * self.table_info.length) <= (((-1) ** player) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
+            print("goal against current player")
             return -1000, -1000
+
+        assert self.table_info.get_goal(self.state.ball[0]) is None
+
+
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
 
         penalty = 0
