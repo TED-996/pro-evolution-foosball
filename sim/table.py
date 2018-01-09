@@ -191,6 +191,10 @@ class TableInfo:
         apply_filter([ball_body], ball_filter)
         apply_filter([goal0_body, goal1_body], goal_filter)
 
+        for body in space.bodies:
+            for shape in body.shapes: #type: pymunk.Shape
+                shape.friction = 0
+
         return space, {
             "ball": ball_body,
             "rods": rod_bodies,
