@@ -9,7 +9,8 @@ class NN:
     def __init__(self, load_file=None,
                  input_dim: int =0,
                  hidden_layers=None,
-                 output_dim: int =0):
+                 output_dim: int =0,
+                 batch_size: int =1):
         """
         :param load_file: a tuple of size 2 with 2 files: one for model and one for NN class remaining attributes
         :param hidden_layers: number of units on each hidden layer
@@ -21,7 +22,7 @@ class NN:
             return
         assert len(hidden_layers) > 0, "NN must contain at least one hidden layer"
         assert output_dim > 0, "NN must contain at least one unit on output layer "
-
+        self.batch_size = batch_size
         self.model = Sequential(self.__build_stack_of_layers(input_dim, hidden_layers, output_dim))
         self.compiled = False
 
@@ -71,6 +72,7 @@ class NN:
         :param state: input of the model
         :param target: output of the model
         """
-#        for i in range(len(target)):
-#            target[i] = expand_dims(target[i], -1)
-        self.model.train_on_batch(array(state), array(target))
+        self.model.fit(x=array(state),
+                       y=array(target),
+                       batch_size=self.batch_size,
+                       verbose=0)

@@ -4,6 +4,7 @@ from ai.NN import NN
 import pickle
 from random import random, randrange
 from collections import deque
+from math import floor
 
 
 class AI:
@@ -13,7 +14,7 @@ class AI:
                  rods_number: int = 0,
                  offset=None,
                  angle_velocity=None,
-                 hidden_layers=(100, 200, 100),
+                 hidden_layers=(100, 100),
                  log_size=10,
                  nn_file: str = "save.model",
                  actions_file: str = "save.actions"):
@@ -50,22 +51,26 @@ class AI:
                                           offset,
                                           angle_velocity)]
         )
+        self.batch_size = floor((2 * log_size) ** 0.5)
         self.model = NN(input_dim=state_size,
                         hidden_layers=hidden_layers,
-                        output_dim=len(self.actions))
+                        output_dim=len(self.actions),
+                        batch_size=self.batch_size)
+
         self.model.compile()
 
     def __load(self, nn_file, actions_file):
         self.model = NN(load_file=nn_file)
         fd = open(actions_file, "rb")
-        self.rods_number, self.actions, self.epsilon, self.lamda = pickle.load(fd)
+        self.rods_number, self.actions, self.epsilon, self.lamda, self.batch_size, self.batch_size = pickle.load(fd)
+        self.model.batch_size = self.batch_size
         fd.close()
 
     def save(self, nn_file: str="save.model", actions_file: str="save.actions"):
         self.model.save(nn_file)
         print("saving ai...")
         fd = open(actions_file, "wb")
-        to_save = (self.rods_number, self.actions, self.epsilon, self.lamda)
+        to_save = (self.rods_number, self.actions, self.epsilon, self.lamda, self.batch_size)
         pickle.dump(to_save, fd, protocol=0)  # protocol 0 for compatibility
         fd.close()
 
