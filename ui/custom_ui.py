@@ -41,6 +41,7 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
     max_speed = 100
     rendering = True
     frame_counter = 0
+    actual_fps = 60
 
     while not done:
         for event in pygame.event.get():
@@ -68,13 +69,19 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
             tick_s = clock.tick() / 1000.0
         frame_counter += 1
 
+        if frame_counter % 600 == 0:
+            actual_fps = 1 / tick_s
+
         for _ in range(speed):
             for side, input in inputs_function(tick_s):
                 sim.apply_inputs(side, input)
             for side, input in _get_key_inputs(sim):
                 sim.apply_inputs(side, input)
 
-            sim.tick(tick_s)
+            if rendering:
+                sim.tick(tick_s)
+            else:
+                sim.tick(1 / 60)
 
             post_tick_function()
 
@@ -91,10 +98,11 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
 
             pygame.display.flip()
         else:
-            if frame_counter % 120 == 0:
+
+            if frame_counter % int(2 * actual_fps) == 0:
                 screen.fill((0, 0, 0))
 
-                _draw_fps(1 / tick_s, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
+                _draw_fps(60, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
 
                 pygame.display.flip()
 
