@@ -39,6 +39,8 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
 
     speed = 1
     max_speed = 100
+    rendering = True
+    frame_counter = 0
 
     while not done:
         for event in pygame.event.get():
@@ -49,6 +51,8 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
                     sim.reset()
                 if event.unicode == "s":
                     save()
+                if event.unicode == " ":
+                    rendering = not rendering
                 if event.key == pygame.K_LEFT and speed > 1:
                     speed -= 1
                     print("Speed set to {}".format(speed))
@@ -58,7 +62,11 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
                 if event.key == pygame.K_F4 and event.mod & pygame.KMOD_ALT:
                     done = True
 
-        tick_s = clock.tick(60) / 1000.0
+        if rendering:
+            tick_s = clock.tick(60) / 1000.0
+        else:
+            tick_s = clock.tick() / 1000.0
+        frame_counter += 1
 
         for _ in range(speed):
             for side, input in inputs_function(tick_s):
@@ -72,15 +80,23 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
 
             check_defer_reset()
 
-        screen.fill((0, 0, 0))
-        table.fill((0, 0, 0))
+        if rendering:
+            screen.fill((0, 0, 0))
+            table.fill((0, 0, 0))
 
-        _draw(sim, sim.ball_body, sim.rod_bodies, rod_owners, sim.goal_bodies, sim.side_bodies, table)
-        screen.blit(table, table_pos)
+            _draw(sim, sim.ball_body, sim.rod_bodies, rod_owners, sim.goal_bodies, sim.side_bodies, table)
+            screen.blit(table, table_pos)
 
-        _draw_fps(1 / tick_s, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
+            _draw_fps(1 / tick_s, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
 
-        pygame.display.flip()
+            pygame.display.flip()
+        else:
+            if frame_counter % 120 == 0:
+                screen.fill((0, 0, 0))
+
+                _draw_fps(1 / tick_s, speed * 1 / tick_s, font, (255, 255, 255), (10, 10), screen)
+
+                pygame.display.flip()
 
 
 def r_int(value):
