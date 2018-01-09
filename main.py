@@ -129,7 +129,10 @@ def _get_post_tick_function(sim: simulation.Simulation):
 
     sim.on_reset.append(on_reset)
 
-    return post_tick_function
+    if "--no-train" not in sys.argv:
+        return post_tick_function
+    else:
+        return lambda: None
 
 
 def _get_table_info():

@@ -62,7 +62,7 @@ class AI:
     def __load(self, nn_file, actions_file):
         self.model = NN(load_file=nn_file)
         fd = open(actions_file, "rb")
-        self.rods_number, self.actions, self.epsilon, self.lamda, self.batch_size, self.batch_size = pickle.load(fd)
+        self.rods_number, self.actions, self.epsilon, self.lamda, self.batch_size = pickle.load(fd)
         self.model.batch_size = self.batch_size
         fd.close()
 
