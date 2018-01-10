@@ -84,7 +84,8 @@ class NN:
         idxs = arange(len(x))
         random.shuffle(idxs)
         idxs = idxs[::step]
-        return array([x[i] for i in idxs]), array([y[i] for i in idxs])
+        return array([x[i] for i in idxs]), \
+               array([y[i] for i in idxs])
 
     def update(self, state, target):
         """
