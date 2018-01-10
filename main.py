@@ -32,8 +32,8 @@ def main():
     sim.on_reset.append(lambda: print("Resetting board"))
     sim.on_reset.append(lambda: pef_brain.flush_last_actions())
 
-    state_template = StateTemplatev2(sim)  # see better place (bogdan)
-    sim.on_reset.append(state_template.reset)
+    state_template = StateTemplate(sim)  # see better place (bogdan)
+    # sim.on_reset.append(state_template.reset)
     custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), save)
 
 

@@ -52,6 +52,7 @@ class NN:
 
     def __load(self, load_file):
         self.model = load_model(load_file)
+        self.compiled = True
 
     def save(self, file):
         """

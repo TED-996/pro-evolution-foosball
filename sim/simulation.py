@@ -146,7 +146,7 @@ class Simulation:
         if ((1 ^ player) * self.table_info.length) <= (((-1) ** player) * self.state.ball[0].real) \
                 and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
             print("goal against current player")
-            return -1000, -1000
+            return -1000, 0
 
         assert self.table_info.get_goal(self.state.ball[0]) is None
 
@@ -155,9 +155,9 @@ class Simulation:
 
         penalty = 0
         if abs(self.state.ball[1]) < 0.0001:
-            penalty -= 5
+            penalty -= 10
         elif abs(self.state.ball[1]) < 0.1:
-            penalty -= min(0.1 / abs(self.state.ball[1]), 5)  # penalty for inert state of the ball
+            penalty -= min(0.1 / abs(self.state.ball[1]), 10)  # penalty for inert state of the ball
         # punish OOB
         if not self.table_info.get_inbounds(self.state.ball[0]):
             penalty -= 2000

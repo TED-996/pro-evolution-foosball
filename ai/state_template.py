@@ -41,7 +41,7 @@ class StateTemplate:
 
         for i, ai_rod in zip(sim.state.rods, self.foosmans):
             state_1.extend(unpack(i))
-            state_1.extend(ai_rod)
+            # state_1.extend(ai_rod)
 
         # rods for player 2
         # both angles and offsets (incl velocities) must be reversed
@@ -55,7 +55,7 @@ class StateTemplate:
 
         for i, ai_rod in zip(reversed(sim.state.rods), self.rev_foosmans):
             state_2.extend(neg_unpack(i))
-            state_2.extend(ai_rod)
+            # state_2.extend(ai_rod)
 
         return state_1, state_2
 
