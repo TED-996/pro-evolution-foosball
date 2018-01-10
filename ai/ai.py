@@ -51,7 +51,7 @@ class AI:
                                           offset,
                                           angle_velocity)]
         )
-        self.batch_size = floor((2 * log_size) ** 0.5)
+        self.batch_size = int(floor((2 * log_size) ** 0.5))
         self.model = NN(input_dim=state_size,
                         hidden_layers=hidden_layers,
                         output_dim=len(self.actions),

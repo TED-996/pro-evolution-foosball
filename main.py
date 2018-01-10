@@ -46,7 +46,7 @@ def load_from_config():
                    rods_number=conf["rods_number"],
                    offset=conf["offset"],
                    angle_velocity=conf["angle_velocity"],
-                   log_size=45)  # see hidden layers field
+                   log_size=100)  # see hidden layers field
     fd.close()
 
 

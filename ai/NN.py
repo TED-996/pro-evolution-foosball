@@ -1,10 +1,14 @@
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
-from numpy import array, expand_dims
+from numpy import array
+from random import randint
 
 
 class NN:
+    INITIALIZER = "lecun_normal"
+    INITIALIZER_BIAS = "zeros"
+    ACTIVATION = "sigmoid"
 
     def __init__(self, load_file=None,
                  input_dim: int =0,
@@ -17,6 +21,7 @@ class NN:
         :param input_dim: input layer dimension(number of units)
         :param output_dim: number of units on output layer
         """
+        self.model = None
         if load_file is not None:
             self.__load(load_file)
             return
@@ -30,13 +35,19 @@ class NN:
     def __build_stack_of_layers(input_dim, hidden_layers, output_dim):
         # add first and last layer in network
         nn_layers = [Dense(units=hidden_layers[0],
-                           activation="relu",
+                           activation=NN.ACTIVATION,
+                           kernel_initializer=NN.INITIALIZER,
+                           bias_initializer=NN.INITIALIZER_BIAS,
                            input_dim=input_dim),
-                     Dense(units=output_dim)]
+                     Dense(kernel_initializer=NN.INITIALIZER,
+                           bias_initializer=NN.INITIALIZER_BIAS,
+                           units=output_dim)]
         # if there are more hidden layers, add them before last layer
         for layer_size in range(1, len(hidden_layers)):
             nn_layers.insert(-1, Dense(units=layer_size,
-                                       activation="relu"))
+                                       kernel_initializer=NN.INITIALIZER,
+                                       bias_initializer=NN.INITIALIZER_BIAS,
+                                       activation=NN.ACTIVATION))
         return nn_layers
 
     def __load(self, load_file):
@@ -50,7 +61,7 @@ class NN:
             raise BaseException("Cannot save a model that was not compiled")
         self.model.save(file)
 
-    def compile(self, lr=0.1, rho=0.9, epsilon=1e-08, decay=0.0):
+    def compile(self, lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0):
         # TODO improvement of hyper-parameters of NN
         if self.compiled:
             print("already compiled!")
@@ -72,7 +83,12 @@ class NN:
         :param state: input of the model
         :param target: output of the model
         """
-        self.model.fit(x=array(state),
-                       y=array(target),
-                       batch_size=self.batch_size,
+        start = randint(0, 2)
+        step = randint(1, 10)  # to be configured
+        x = array(state)[start::step]
+        y = array(target)[start::step]
+        batch_size = max(int(len(x) ** 0.5), 1)
+        self.model.fit(x=x,
+                       y=y,
+                       batch_size=batch_size,
                        verbose=0)
