@@ -1,7 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
-from numpy import array
+from numpy import array, arange, random, fromiter
 from random import randint
 
 
@@ -78,17 +78,23 @@ class NN:
         """
         return self.model.predict_on_batch(array([state]))[0]
 
+    @staticmethod
+    def __shuffler(x, y, max_step_size=10):
+        step = randint(1, max_step_size)  # to be configured
+        idxs = arange(len(x))
+        random.shuffle(idxs)
+        idxs = idxs[::step]
+        return array([x[i] for i in idxs]), array([y[i] for i in idxs])
+
     def update(self, state, target):
         """
         :param state: input of the model
         :param target: output of the model
         """
-        start = randint(0, 2)
-        step = randint(1, 10)  # to be configured
-        x = array(state)[start::step]
-        y = array(target)[start::step]
+        x, y = NN.__shuffler(array(state), array(target))
         batch_size = max(int(len(x) ** 0.5), 1)
         self.model.fit(x=x,
                        y=y,
                        batch_size=batch_size,
-                       verbose=0)
+                       verbose=0,
+                       shuffle=False)
