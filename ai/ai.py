@@ -38,6 +38,7 @@ class AI:
         self.lamda = 0.6
         self.alpha = 0.9
         self.epsilon = 0.5  # greedy policy
+        self.__epsilon_backup = self.epsilon
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
         self.__decreasing_rate = 0.99997
@@ -118,8 +119,6 @@ class AI:
         self.__compute_and_backup(state)
 
         if random() < self.epsilon:  # should choose an action random
-            if self.epsilon < 0.1:
-                print("random choice; epsilon = {}".format(self.epsilon))
             self.epsilon *= self.__decreasing_rate
             self.last_actions_index.append(action_selector(True, None))
             return [self.actions[i] for i in self.last_actions_index[-1]]
@@ -181,3 +180,10 @@ class AI:
         self.last_states.clear()
         self.last_actions_index.clear()
         self.last_predictions.clear()
+
+    def switch_random_action(self, activate):
+        if not activate:
+            self.__epsilon_backup = self.epsilon
+            self.epsilon = 0
+        else:
+            self.epsilon = self.__epsilon_backup

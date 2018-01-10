@@ -34,7 +34,7 @@ def main():
 
     state_template = StateTemplate(sim)  # see better place (bogdan)
     # sim.on_reset.append(state_template.reset)
-    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), save)
+    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), pef_brain)
 
 
 def load_from_config():
@@ -53,13 +53,6 @@ def load_from_config():
 def load():
     global pef_brain
     pef_brain = AI(load=True)
-
-
-def save():
-    print("saving...")
-    global pef_brain
-    if pef_brain is not None:
-        pef_brain.save()
 
 
 def get_actions(sim: simulation.Simulation):
@@ -97,9 +90,9 @@ def _get_inputs_function(sim: simulation.Simulation):
         return last_input
         # return []
     if "--no-train" not in sys.argv:
-        return inputs_function_nn
+        return inputs_function_nn, lambda _: get_actions(sim)
     else:
-        return lambda _: get_actions(sim)
+        return lambda _: get_actions(sim), inputs_function_nn
 
 
 def _get_post_tick_function(sim: simulation.Simulation):
@@ -130,9 +123,9 @@ def _get_post_tick_function(sim: simulation.Simulation):
     sim.on_reset.append(on_reset)
 
     if "--no-train" not in sys.argv:
-        return post_tick_function
+        return post_tick_function, lambda: None
     else:
-        return lambda: None
+        return lambda: None, post_tick_function
 
 
 def _get_table_info():
