@@ -88,15 +88,19 @@ class NN:
         return array([x[i] for i in idxs]), \
                array([y[i] for i in idxs])
 
-    def update(self, state, target):
+    def update(self, state, target, correlation_remove=True, epochs=1):
         """
-        :param state: input of the model
+        :param state: input of the model)
         :param target: output of the model
+        :param correlation_remove:
+        :param epochs
         """
-        x, y = NN.__shuffler(array(state), array(target))
-        batch_size = max(int(len(x) ** 0.5), 1)
-        self.model.fit(x=x,
-                       y=y,
+        if correlation_remove:
+            state, target = NN.__shuffler(array(state), array(target))
+        batch_size = max(int(len(state) ** 0.5), 1)
+        self.model.fit(x=state,
+                       y=target,
                        batch_size=batch_size,
                        verbose=0,
-                       shuffle=False)
+                       epochs=epochs,
+                       shuffle=not correlation_remove)

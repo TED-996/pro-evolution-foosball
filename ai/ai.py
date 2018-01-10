@@ -1,13 +1,15 @@
 from numpy import array, arange, argmax
+from numpy.random import choice
 from itertools import product
 from ai.NN import NN
 import pickle
-from random import random, randrange
+from random import random, randrange, randint
 from collections import deque
 from math import floor
 
 
 class AI:
+    MEMORY_DIMENSION = 90000
 
     def __init__(self, load: bool = False,
                  state_size: int = 0,
@@ -42,6 +44,12 @@ class AI:
         # decreasing_rate will decrease epsilon such that in the future, when nn learned something
         # to not make anymore random choices
         self.__decreasing_rate = 0.99997
+
+        # memory replay
+        self.memory_state = deque(maxlen=AI.MEMORY_DIMENSION)
+        self.memory_target = deque(maxlen=AI.MEMORY_DIMENSION)
+        # with save_probability save a memory with consist of a state and a target
+        self.save_probability = 0.3
         if load:
             self.__load(nn_file, actions_file)
             return
@@ -164,8 +172,14 @@ class AI:
             for j, update in zip(self.last_actions_index[-2 + i], q_values_updated):
                 self.last_predictions[-2 + i][j] = update
 
-        self.model.update(self.last_states, self.last_predictions)
+        if random() < self.save_probability:
+            self.memory_state.append(self.last_states[0])
+            self.memory_target.appendleft(self.last_predictions[0])
 
+        if random() <= 0.5:
+            self.model.update(self.last_states, self.last_predictions)
+        else:
+            self.from_memory_update()
         # we trust more in next move when network learn more
         self.lamda += self.lamda * 1.e-7
         if self.lamda > 1:
@@ -187,3 +201,13 @@ class AI:
             self.epsilon = 0
         else:
             self.epsilon = self.__epsilon_backup
+
+    def from_memory_update(self):
+        if len(self.memory_state) < 1000:
+            return
+        idxs = arange(len(self.memory_state))
+        size = randint(200, 1000)
+        sample = choice(idxs, size, replace=False)
+        self.model.update(array([self.memory_state[i] for i in sample]),
+                          array([self.memory_target[i] for i in sample]),
+                          False, 3)
