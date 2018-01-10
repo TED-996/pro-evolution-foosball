@@ -6,7 +6,7 @@ import pygame
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
+def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_brain):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -20,7 +20,6 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
                  (screen.get_height() - table.get_height()) / 2)
 
     rod_owners = sim.get_rod_owners()
-
 
     reset_deferred = False
 
@@ -42,6 +41,12 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
     rendering = True
     frame_counter = 0
     actual_fps = 60
+    toggle_msg = {
+        True : "activated",
+        False: "deactivated"
+    }
+    toggle_random = True
+    toggle_update = 0
 
     while not done:
         for event in pygame.event.get():
@@ -51,9 +56,16 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
                 if event.unicode == "r":
                     sim.reset()
                 if event.unicode == "s":
-                    save()
+                    pef_brain.save()
                 if event.unicode == " ":
                     rendering = not rendering
+                if event.unicode == "a":
+                    toggle_random = not toggle_random
+                    pef_brain.switch_random_action(toggle_random)
+                    print("Random action {}".format(toggle_msg[toggle_random]))
+                if event.unicode == "u":
+                    toggle_update = toggle_update ^ 1
+                    print("Update is {}".format(toggle_msg[toggle_update == 0]))
                 if event.key == pygame.K_LEFT and speed > 1:
                     speed -= 1
                     print("Speed set to {}".format(speed))
@@ -73,7 +85,7 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
             actual_fps = 1 / tick_s
 
         for _ in range(speed):
-            for side, input in inputs_function(tick_s):
+            for side, input in inputs_functions[toggle_update](tick_s):
                 sim.apply_inputs(side, input)
             for side, input in _get_key_inputs(sim):
                 sim.apply_inputs(side, input)
@@ -83,7 +95,7 @@ def run(sim: simulation.Simulation, inputs_function, post_tick_function, save):
             else:
                 sim.tick(1 / 60)
 
-            post_tick_function()
+            post_tick_functions[toggle_update]()
 
             check_defer_reset()
 
