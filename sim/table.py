@@ -1,6 +1,7 @@
 from . import state
 import pymunk
 import math
+import random
 
 
 class TableInfo:
@@ -81,6 +82,9 @@ class TableInfo:
             ]
         }
         """
+        def small_rand(maximum):
+            return random.random() * 2 * maximum - maximum
+
         space = pymunk.Space()
         space.gravity = (0, 0)
 
@@ -88,7 +92,8 @@ class TableInfo:
         ball_shape = pymunk.Circle(ball_body, self.ball_radius)
         ball_shape.density = 1.0
         ball_shape.elasticity = 0.8
-        ball_body.position = (self.length / 2, 0.5)
+        ball_body.position = (self.length / 2 + small_rand(0.05), 0.5 + small_rand(0.05))
+        ball_body.velocity = (small_rand(0.05), small_rand(0.05))
 
         space.add(ball_body, ball_shape)
 

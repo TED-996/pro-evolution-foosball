@@ -162,6 +162,16 @@ class Simulation:
         if not self.table_info.get_inbounds(self.state.ball[0]):
             penalty -= 2000
 
+        for t_rod, rod in zip(self.table_info.rods, self.state.rods):
+            # Check if it's our own rod
+            if t_rod[0] != player:
+                continue
+
+            if rod[0][0] < 0.01 or rod[0][0] > 0.99:
+                penalty -= 5
+            if rod[1][0] < -0.99 or rod[1][0] > 0.99:
+                penalty -= 5
+
         # return a score that is a sum of:
         #   how far is the ball from goal of player
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
