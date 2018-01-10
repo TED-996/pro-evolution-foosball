@@ -65,7 +65,12 @@ class NN:
         :param state: must be a vector with all values that will represent a state
         :return: an array with q values for each possible action
         """
-        return self.model.predict_on_batch(array([state]))[0]
+        print(array([state]))
+
+        r = self.model.predict_on_batch(array([state]))
+        print(r)
+
+        return r[0]
 
     def update(self, state, target):
         """

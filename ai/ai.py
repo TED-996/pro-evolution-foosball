@@ -1,4 +1,4 @@
-from numpy import array, arange, argmax
+from numpy import array, arange, argmax, average
 from itertools import product
 from ai.NN import NN
 import pickle
@@ -14,7 +14,7 @@ class AI:
                  rods_number: int = 0,
                  offset=None,
                  angle_velocity=None,
-                 hidden_layers=(100, 100),
+                 hidden_layers=(100,),
                  log_size=10,
                  nn_file: str = "save.model",
                  actions_file: str = "save.actions"):
@@ -75,6 +75,7 @@ class AI:
         fd.close()
 
     def __compute_and_backup(self, state):
+        print("State: {}".format(state))
         self.last_predictions.append(self.model.predict_action(state))
         self.last_states.append(state)
 
@@ -85,8 +86,16 @@ class AI:
     def multiple_actions(self, q_values):
         actions_idxs = []
         slice_size = int(len(self.actions) // self.rods_number)
+
         for i in range(self.rods_number):
             actions_idxs.append(i * slice_size + argmax(q_values[i * slice_size:(i + 1) * slice_size]))
+
+        print("Picked Qs: {}; avg {}, avg all {}".format(
+            [q_values[i] for i in actions_idxs],
+            sum(q_values[i] for i in actions_idxs) / len(actions_idxs),
+            average(q_values)
+        ))
+
         return actions_idxs
 
     def get_action(self, state, action_selector):
@@ -115,6 +124,7 @@ class AI:
             return self.multiple_actions(q_values)
 
     def get_action_off_policy(self, state, action_selector):
+        print("Getting action")
         self.__compute_and_backup(state)
 
         if random() < self.epsilon:  # should choose an action random
@@ -174,6 +184,7 @@ class AI:
             self.lamda = 1
 
     def predict_action(self, state, action_selector):
+        print("Getting action")
         actions_idxs = action_selector(self.model.predict_action(state))
         return [self.actions[i] for i in actions_idxs]
 
