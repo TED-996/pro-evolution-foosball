@@ -2,5 +2,5 @@
     "state_size": 36,
     "rods_number": 4,
     "offset": [0.7, 0.0, -0.7],
-    "angle_velocity": [5, 0.0, -5]
+    "angle_velocity": [12, 0.0, -12]
 }
