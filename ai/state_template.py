@@ -132,8 +132,6 @@ class StateTemplatev2:
                 rod[0] = init_rod + sign(diff) * self.foosman_height
 
     def reset(self):
-        print("Reset called")
-        print("Before\nfoosman = {}\nrev_foosman = {}".format(self.foosmans, self.rev_foosmans))
         for foosman, init_rod_x in zip(self.foosmans, self._rods_initial_postion):
             # check side distance
             # must be 0 if rods are in initial position
@@ -147,8 +145,6 @@ class StateTemplatev2:
             offset = (1 - rev_foosman[1][-1] - rev_foosman[1][0]) / 2
             rev_foosman[1] += offset
             rev_foosman[0] = rev_init_rod_x
-        print("After\nfoosman = {}\nrev_foosman = {}".format(self.foosmans, self.rev_foosmans))
-        exit(1)
 
     def get_states_from_sim(self, sim: Simulation):
         # TODO: this is not properly reversed.
