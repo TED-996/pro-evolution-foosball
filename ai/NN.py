@@ -2,6 +2,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
 from numpy import array, expand_dims
+import time
 
 
 class NN:
@@ -56,7 +57,7 @@ class NN:
             print("already compiled!")
             return
         self.compiled = True
-        self.model.compile(optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),
+        self.model.compile(optimizer=RMSprop(),
                            loss="mean_squared_error",
                            metrics=["accuracy"])
 
@@ -65,10 +66,16 @@ class NN:
         :param state: must be a vector with all values that will represent a state
         :return: an array with q values for each possible action
         """
+        print("\n" * 200)
+
         print(array([state]))
 
         r = self.model.predict_on_batch(array([state]))
         print(r)
+
+        # for layer in self.model.layers: # type: Sequential
+        #     print(layer.get_weights())
+
 
         return r[0]
 

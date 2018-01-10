@@ -75,7 +75,7 @@ class AI:
         fd.close()
 
     def __compute_and_backup(self, state):
-        print("State: {}".format(state))
+        # print("State: {}".format(state))
         self.last_predictions.append(self.model.predict_action(state))
         self.last_states.append(state)
 
@@ -89,6 +89,7 @@ class AI:
 
         for i in range(self.rods_number):
             actions_idxs.append(i * slice_size + argmax(q_values[i * slice_size:(i + 1) * slice_size]))
+
 
         print("Picked Qs: {}; avg {}, avg all {}".format(
             [q_values[i] for i in actions_idxs],
