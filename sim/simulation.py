@@ -29,7 +29,6 @@ class Simulation:
         self.on_goal = []
         self.on_oob = []
 
-
     def reset(self):
         self.state = self.table_info.get_init_state()
 
@@ -134,22 +133,16 @@ class Simulation:
                         1 for player with the goal at x = MAX_X coordinate)
         :return: a score for current state for player player
         """
-        half_goal = self.table_info.goal_width / 2
-        player_starting_point = player * self.table_info.length  # i.e X coordinate for goal
         # check for goal for player
+        goal = self.table_info.get_goal(self.state.ball[0])
 
-        if player_starting_point <= (((-1) ** (1 ^ player)) * self.state.ball[0].real) \
-                and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
-            print("goal for current player")
+        if goal == (1 - player):
+            print("goal for current player (side {})".format(player))
             return 1000, 0
         # check for goal for opponent
-        if ((1 ^ player) * self.table_info.length) <= (((-1) ** player) * self.state.ball[0].real) \
-                and ((0.5 - half_goal) < self.state.ball[0].imag < (0.5 + half_goal)):
-            print("goal against current player")
+        if goal == player:
+            print("goal against current player (side {})".format(player))
             return -1000, 0
-
-        assert self.table_info.get_goal(self.state.ball[0]) is None
-
 
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
 
@@ -175,14 +168,25 @@ class Simulation:
         # return a score that is a sum of:
         #   how far is the ball from goal of player
         #   50% of above number (negative weighted if player doesn't have possession, positive otherwise )
+        player_starting_point = self.table_info.length * player
         dist_from_goal = abs(player_starting_point - self.state.ball[0].real)
         dist_to_goal = self.table_info.length - dist_from_goal
 
+        if ball_direction == 0:
+            return -5, penalty - 5
+
+        good_multiplier = 8
+        bad_multiplier = 3
+
         if dist_to_goal < dist_from_goal:
-            # has advantage
-            return dist_from_goal / dist_to_goal * 10, penalty
-        # ball is in my half and it will by bad if direction of ball is toward me
-        return ball_direction * dist_from_goal / dist_to_goal * 10, penalty
+            score_multiplier = good_multiplier
+        else:
+            score_multiplier = bad_multiplier
+        if ball_direction == 1:
+            return min(dist_from_goal / dist_to_goal * score_multiplier, 50), penalty
+        else:
+            # return negative the other player's score
+            return -min(dist_to_goal / dist_from_goal * good_multiplier, 50), penalty
 
     def get_rod_owners(self):
         return [r[0] for r in self.table_info.rods]

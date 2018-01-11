@@ -84,7 +84,7 @@ class NN:
         step = randint(1, max_step_size)  # to be configured
         idxs = arange(len(x))
         random.shuffle(idxs)
-        idxs = idxs[::step]
+        idxs = idxs[::-step]
         return array([x[i] for i in idxs]), \
                array([y[i] for i in idxs])
 
