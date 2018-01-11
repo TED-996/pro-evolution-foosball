@@ -82,11 +82,11 @@ class NN:
     @staticmethod
     def __shuffler(x, y, max_step_size=10):
         step = randint(1, max_step_size)  # to be configured
-        idxs = arange(len(x))
+        idxs = arange(len(x) - 2)
         random.shuffle(idxs)
-        idxs = idxs[::-step]
-        return array([x[i] for i in idxs]), \
-               array([y[i] for i in idxs])
+        idxs = idxs[::step]
+        return array([x[i] for i in idxs] + [x[-2], x[-1]]), \
+               array([y[i] for i in idxs] + [x[-2], x[-1]])
 
     def update(self, state, target, correlation_remove=True, epochs=1):
         """

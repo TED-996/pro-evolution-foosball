@@ -173,8 +173,8 @@ class AI:
                 self.last_predictions[-2 + i][j] = update
 
         if random() < self.save_probability:
-            self.memory_state.append(self.last_states[0])
-            self.memory_target.appendleft(self.last_predictions[0])
+            self.memory_state.append(self.last_states[-1])
+            self.memory_target.appendleft(self.last_predictions[-1])
 
         if random() <= 0.5:
             self.model.update(self.last_states, self.last_predictions)
