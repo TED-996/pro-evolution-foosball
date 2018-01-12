@@ -59,6 +59,10 @@ class StateTemplate:
 
         return state_1, state_2
 
+    def get_state_from_sim_for_player(self, player, sim: Simulation):
+        assert player in [0, 1], "Wrong value for player. Must be 0 or 1"
+        return self.get_states_from_sim(sim)[player]
+
 
 class StateTemplatev2:
 

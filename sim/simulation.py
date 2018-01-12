@@ -138,11 +138,11 @@ class Simulation:
 
         if goal == (1 - player):
             print("goal for current player (side {})".format(player))
-            return 1000, 0
+            return 1000
         # check for goal for opponent
         if goal == player:
             print("goal against current player (side {})".format(player))
-            return -1000, 0
+            return -1000
 
         ball_direction = np.sign(self.state.ball[1].real) * ((-1) ** player)
 
@@ -173,7 +173,7 @@ class Simulation:
         dist_to_goal = self.table_info.length - dist_from_goal
 
         if ball_direction == 0:
-            return -5, penalty - 5
+            return -5 + penalty - 5
 
         good_multiplier = 8
         bad_multiplier = 3
@@ -183,10 +183,10 @@ class Simulation:
         else:
             score_multiplier = bad_multiplier
         if ball_direction == 1:
-            return min(dist_from_goal / dist_to_goal * score_multiplier, 50), penalty
+            return min(dist_from_goal / dist_to_goal * score_multiplier, 50) + penalty
         else:
             # return negative the other player's score
-            return -min(dist_to_goal / dist_from_goal * good_multiplier, 50), penalty
+            return -min(dist_to_goal / dist_from_goal * good_multiplier, 50) + penalty
 
     def get_rod_owners(self):
         return [r[0] for r in self.table_info.rods]

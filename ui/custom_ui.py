@@ -6,7 +6,7 @@ import pygame
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_brain):
+def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_brain, train_step):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -85,17 +85,20 @@ def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_b
             actual_fps = 1 / tick_s
 
         for _ in range(speed):
+            """
             for side, input in inputs_functions[toggle_update](tick_s):
                 sim.apply_inputs(side, input)
             for side, input in _get_key_inputs(sim):
                 sim.apply_inputs(side, input)
+            """
+            train_step(sim)
 
             if rendering:
                 sim.tick(tick_s)
             else:
                 sim.tick(1 / 60)
 
-            post_tick_functions[toggle_update]()
+            # post_tick_functions[toggle_update]()
 
             check_defer_reset()
 
