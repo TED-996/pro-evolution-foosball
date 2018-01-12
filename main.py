@@ -64,26 +64,6 @@ def get_actions(sim: simulation.Simulation):
     return ret
 
 
-def _make_action(side: int, sim: simulation.Simulation):
-    # player on the side 'side' make a move
-    # based on actions taken, update sim
-    # return a pair of state, reward
-    state = state_template.get_state_from_sim_for_player(side, sim)
-    reward = sim.get_current_reward(side)
-    for input in pef_brain.get_action_off_policy(state, pef_brain.multiple_actions):
-        sim.apply_inputs(side, input)
-    reward -= sim.get_current_reward(side)
-    return state_template.get_state_from_sim_for_player(side, sim), reward
-
-
-def make_action_for_both_players(sim: simulation.Simulation):
-    new_states = [None, None]
-    rewards = [None, None]
-    new_states[0], rewards[0] = _make_action(0, sim)
-    new_states[1], rewards[1] = _make_action(1, sim)
-    return rewards, new_states
-
-
 def train_step(sim: simulation.Simulation):
     pef_brain.update(*make_action_for_both_players(sim))
 
