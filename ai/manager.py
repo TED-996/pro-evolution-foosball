@@ -1,6 +1,7 @@
 from sim.simulation import Simulation
 from ai.ai import AI
 from ai.state_template import StateTemplate
+from numpy import array
 
 
 class Manager:
@@ -72,3 +73,75 @@ class Manager:
         # interface for update (toggle will switch between semantic of this function)
         self.on_update()
 
+    def save(self):
+        self.brain.save()
+
+
+class IndependentManager:
+
+    def __init__(self, brain_1: AI, brain_2: AI, sim: Simulation, state_template: StateTemplate):
+        self.brain_1 = brain_1
+        self.brain_2 = brain_2
+        self.sim = sim
+        self.state_template = state_template
+        # will preserve (reward, state) until it will be passed to AI update
+        self.backup_1 = None
+        self.backup_2 = None
+        self.on_make_action = self._make_action_for_update
+        self.on_update = self._update
+
+    def toggle(self, active):
+        # if active is true, the perform and update
+        if active:
+            self.on_make_action = self._make_action_for_update
+            self.on_update = self._update
+        else:
+            self.on_make_action = self._make_action
+            self.on_update = lambda: None
+
+    def _make_one_action_for_update(self):
+        state1, state2 = self.state_template.get_states_from_sim(self.sim)
+        player1 = self.brain_1.get_action_off_policy(state1, self.brain_1.multiple_actions_off_policy)
+        player2 = self.brain_2.get_action_off_policy(state2, self.brain_2.multiple_actions_off_policy)
+        score = array([self.sim.get_current_reward(0), self.sim.get_current_reward(1)])
+        for input in player1:
+            self.sim.apply_inputs(0, input)
+        for input in player2:
+            self.sim.apply_inputs(1, input)
+        score = score - array([self.sim.get_current_reward(0), self.sim.get_current_reward(1)])
+        return score, self.state_template.get_states_from_sim(self.sim)
+
+    def _make_action_for_update(self):
+        score_1, new_state_1 = self._make_one_action_for_update()
+        score_2, new_state_2 = self._make_one_action_for_update()
+        self.backup_1 = (score_1[0], score_2[0]), (new_state_1[0], new_state_2[0])
+        self.backup_2 = (score_1[1], score_2[1]), (new_state_1[1], new_state_2[1])
+
+    def _update(self):
+        if self.backup_1 is not None and \
+           self.backup_2 is not None:
+            self.brain_1.update(*self.backup_1)
+            self.brain_2.update(*self.backup_1)
+            del self.backup_1
+            del self.backup_2
+
+    def _make_action(self):
+        state1, state2 = self.state_template.get_states_from_sim(self.sim)
+        player1 = self.brain_1.predict_action(state1, self.brain_1.multiple_actions)
+        player2 = self.brain_2.predict_action(state2, self.brain_2.multiple_actions)
+        for input in player1:
+            self.sim.apply_inputs(0, input)
+        for input in player2:
+            self.sim.apply_inputs(1, input)
+
+    def save(self):
+        self.brain_1.save(actions_file="save.actions1", nn_file="save.model1")
+        self.brain_2.save(actions_file="save.actions2", nn_file="save.model2")
+
+    def make_action(self):
+        # interface for make action (toggle will switch between semantic of this function)
+        self.on_make_action()
+
+    def update(self):
+        # interface for update (toggle will switch between semantic of this function)
+        self.on_update()

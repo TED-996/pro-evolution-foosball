@@ -2,11 +2,12 @@ from sim import simulation
 import pymunk
 import pymunk.pygame_util
 import pygame
+from ai.manager import Manager
 
 _scale = 500
 
 
-def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_brain, train_step):
+def run(sim: simulation.Simulation, manager: Manager):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -46,7 +47,7 @@ def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_b
         False: "deactivated"
     }
     toggle_random = True
-    toggle_update = 0
+    toggle_update = True
 
     while not done:
         for event in pygame.event.get():
@@ -56,16 +57,17 @@ def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_b
                 if event.unicode == "r":
                     sim.reset()
                 if event.unicode == "s":
-                    pef_brain.save()
+                    manager.save()
                 if event.unicode == " ":
                     rendering = not rendering
                 if event.unicode == "a":
                     toggle_random = not toggle_random
-                    pef_brain.switch_random_action(toggle_random)
+                    manager.brain.switch_random_action(toggle_random)
                     print("Random action {}".format(toggle_msg[toggle_random]))
                 if event.unicode == "u":
-                    toggle_update = toggle_update ^ 1
-                    print("Update is {}".format(toggle_msg[toggle_update == 0]))
+                    toggle_update = not toggle_update
+                    manager.toggle(toggle_update)
+                    print("Update is {}".format(toggle_msg[toggle_update]))
                 if event.key == pygame.K_LEFT and speed > 1:
                     speed -= 1
                     print("Speed set to {}".format(speed))
@@ -85,21 +87,14 @@ def run(sim: simulation.Simulation, inputs_functions, post_tick_functions, pef_b
             actual_fps = 1 / tick_s
 
         for _ in range(speed):
-            """
-            for side, input in inputs_functions[toggle_update](tick_s):
-                sim.apply_inputs(side, input)
-            for side, input in _get_key_inputs(sim):
-                sim.apply_inputs(side, input)
-            """
-            train_step(sim)
 
+            manager.make_action()
             if rendering:
                 sim.tick(tick_s)
             else:
                 sim.tick(1 / 60)
 
-            # post_tick_functions[toggle_update]()
-
+            manager.update()
             check_defer_reset()
 
         if rendering:

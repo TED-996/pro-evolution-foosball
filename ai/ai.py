@@ -9,7 +9,7 @@ from math import floor
 
 
 class AI:
-    MEMORY_DIMENSION = 90000
+    MEMORY_DIMENSION = 10000
 
     def __init__(self, load: bool = False,
                  state_size: int = 0,
@@ -46,10 +46,10 @@ class AI:
         self.__decreasing_rate = 0.99997
 
         # memory replay
-        self.memory_state = deque(maxlen=AI.MEMORY_DIMENSION)
-        self.memory_target = deque(maxlen=AI.MEMORY_DIMENSION)
+        self.memory_state = []  # deque(maxlen=AI.MEMORY_DIMENSION)
+        self.memory_target = []  # deque(maxlen=AI.MEMORY_DIMENSION)
         # with save_probability save a memory with consist of a state and a target
-        self.save_probability = 0.3
+        self.save_probability = 0.1
         if load:
             self.__load(nn_file, actions_file)
             return
@@ -174,7 +174,10 @@ class AI:
 
         if random() < self.save_probability:
             self.memory_state.append(self.last_states[-1])
-            self.memory_target.appendleft(self.last_predictions[-1])
+            self.memory_target.append(self.last_predictions[-1])
+            if len(self.memory_target) > AI.MEMORY_DIMENSION:
+                self.memory_target.pop(0)
+                self.memory_state.pop(0)
 
         if random() <= 0.5:
             self.model.update(self.last_states, self.last_predictions)
@@ -203,11 +206,12 @@ class AI:
             self.epsilon = self.__epsilon_backup
 
     def from_memory_update(self):
-        if len(self.memory_state) < 1000:
+        if len(self.memory_state) < 500:
             return
+
         idxs = arange(len(self.memory_state))
-        size = randint(200, 1000)
+        size = randint(300, 500)
         sample = choice(idxs, size, replace=False)
         self.model.update(array([self.memory_state[i] for i in sample]),
                           array([self.memory_target[i] for i in sample]),
-                          False, 3)
+                          False, 2)

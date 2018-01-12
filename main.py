@@ -3,6 +3,7 @@ from sim import simulation
 from sim import table
 from ai.ai import AI
 from ai.state_template import StateTemplate, StateTemplatev2
+from ai.manager import IndependentManager
 import json
 import random
 import math
@@ -11,12 +12,13 @@ import sys
 
 conf = {}
 pef_brain : AI = None
+pef_brain2: AI = None
 state_template = None
 
 
 def main():
     global state_template
-    global pef_brain
+    global pef_brain, pef_brain2
 
     if "--load" in sys.argv:
         load()
@@ -33,20 +35,27 @@ def main():
     sim.on_reset.append(lambda: pef_brain.flush_last_actions())
 
     state_template = StateTemplate(sim)  # see better place (bogdan)
+    manager = IndependentManager(pef_brain, pef_brain2, sim, state_template)
     # sim.on_reset.append(state_template.reset)
-    custom_ui.run(sim, _get_inputs_function(sim), _get_post_tick_function(sim), pef_brain, train_step)
+    custom_ui.run(sim, manager)
 
 
 def load_from_config():
     fd = open("config", "rt")
-    global conf, pef_brain
+    global conf, pef_brain, pef_brain2
     conf = json.load(fd)
     pef_brain = AI(load=False,
                    state_size=conf["state_size"],
                    rods_number=conf["rods_number"],
                    offset=conf["offset"],
                    angle_velocity=conf["angle_velocity"],
-                   log_size=100)  # see hidden layers field
+                   log_size=100)
+    pef_brain2 = AI(load=False,
+                    state_size=conf["state_size"],
+                    rods_number=conf["rods_number"],
+                    offset=conf["offset"],
+                    angle_velocity=conf["angle_velocity"],
+                    log_size=100)
     fd.close()
 
 
@@ -64,12 +73,10 @@ def get_actions(sim: simulation.Simulation):
     return ret
 
 
-def train_step(sim: simulation.Simulation):
-    pef_brain.update(*make_action_for_both_players(sim))
-
 
 last_input = None
 
+# TODO need this function anymore?
 def _get_inputs_function(sim: simulation.Simulation):
     time = 0
 
@@ -99,6 +106,7 @@ def _get_inputs_function(sim: simulation.Simulation):
         return lambda _: get_actions(sim), inputs_function_nn
 
 
+# TODO need this function anymore?
 def _get_post_tick_function(sim: simulation.Simulation):
     last_reward_1 = 0
     last_reward_2 = 0
