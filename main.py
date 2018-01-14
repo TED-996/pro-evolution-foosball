@@ -3,7 +3,7 @@ from sim import simulation
 from sim import table
 from ai.ai import AI
 from ai.state_template import StateTemplate, StateTemplatev2
-from ai.manager import IndependentManager
+from ai.manager import IndependentManager, Manager
 import json
 import random
 import math

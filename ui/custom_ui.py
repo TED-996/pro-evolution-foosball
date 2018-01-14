@@ -2,12 +2,11 @@ from sim import simulation
 import pymunk
 import pymunk.pygame_util
 import pygame
-from ai.manager import Manager
 
 _scale = 500
 
 
-def run(sim: simulation.Simulation, manager: Manager):
+def run(sim: simulation.Simulation, manager):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Helvetica", 16)
@@ -88,10 +87,11 @@ def run(sim: simulation.Simulation, manager: Manager):
 
         for _ in range(speed):
 
-            manager.make_action()
             if rendering:
+                manager.make_action(tick_s)
                 sim.tick(tick_s)
             else:
+                manager.make_action(1 / 60)
                 sim.tick(1 / 60)
 
             manager.update()
