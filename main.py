@@ -19,12 +19,14 @@ state_template = None
 def main():
     global state_template
     global pef_brain, pef_brain2
-
+    """
+    # Not supported
     if "--load" in sys.argv:
         load()
     else:
         load_from_config()
-
+    """
+    load_from_config()
     table_info = _get_table_info()
     sim = simulation.Simulation(table.TableInfo.from_dict(table_info))
 
@@ -33,9 +35,12 @@ def main():
 
     sim.on_reset.append(lambda: print("Resetting board"))
     sim.on_reset.append(lambda: pef_brain.flush_last_actions())
-
     state_template = StateTemplate(sim)  # see better place (bogdan)
-    manager = IndependentManager(pef_brain, pef_brain2, sim, state_template)
+    manager = None
+    if "--one-network" in sys.argv:
+        manager = Manager(pef_brain, sim, state_template)
+    else:
+        manager = IndependentManager(pef_brain, pef_brain2, sim, state_template)
     # sim.on_reset.append(state_template.reset)
     custom_ui.run(sim, manager)
 
