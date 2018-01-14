@@ -73,6 +73,9 @@ class Manager:
         # interface for update (toggle will switch between semantic of this function)
         self.on_update()
 
+    def switch_random_action(self, toggle):
+        self.brain.switch_random_action(toggle)
+
     def save(self):
         self.brain.save()
 
@@ -145,3 +148,7 @@ class IndependentManager:
     def update(self):
         # interface for update (toggle will switch between semantic of this function)
         self.on_update()
+
+    def switch_random_action(self, toggle):
+        self.brain_1.switch_random_action(toggle)
+        self.brain_2.switch_random_action(toggle)

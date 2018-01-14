@@ -62,7 +62,7 @@ def run(sim: simulation.Simulation, manager: Manager):
                     rendering = not rendering
                 if event.unicode == "a":
                     toggle_random = not toggle_random
-                    manager.brain.switch_random_action(toggle_random)
+                    manager.switch_random_action(toggle_random)
                     print("Random action {}".format(toggle_msg[toggle_random]))
                 if event.unicode == "u":
                     toggle_update = not toggle_update

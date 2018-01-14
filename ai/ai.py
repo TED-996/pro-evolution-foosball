@@ -171,7 +171,7 @@ class AI:
 
             for j, update in zip(self.last_actions_index[-2 + i], q_values_updated):
                 self.last_predictions[-2 + i][j] = update
-
+        """
         if random() < self.save_probability:
             self.memory_state.append(self.last_states[-1])
             self.memory_target.append(self.last_predictions[-1])
@@ -183,6 +183,9 @@ class AI:
             self.model.update(self.last_states, self.last_predictions)
         else:
             self.from_memory_update()
+        """
+        if len(self.last_states) > 2:
+            self.model.update(self.last_states, self.last_predictions)
         # we trust more in next move when network learn more
         self.lamda += self.lamda * 1.e-7
         if self.lamda > 1:

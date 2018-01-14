@@ -1,7 +1,8 @@
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import RMSprop
-from numpy import array, arange, random, fromiter
+from numpy import array, arange
+from numpy.random import choice
 from random import randint
 
 
@@ -80,11 +81,11 @@ class NN:
         return self.model.predict_on_batch(array([state]))[0]
 
     @staticmethod
-    def __shuffler(x, y, max_step_size=10):
-        step = randint(1, max_step_size)  # to be configured
-        idxs = arange(len(x) - 2)
-        random.shuffle(idxs)
-        idxs = idxs[::step]
+    def __shuffler(x, y):
+        # use a percent between 40% and 90% from original data set (without last 2 states)
+        set_size = randint((len(x) * 4) // 10, ((len(x) - 2) * 9) // 10)
+        idxs = choice(a=arange(len(x) - 2), size=set_size, replace=False)
+
         return array([x[i] for i in idxs] + [x[-2], x[-1]]), \
                array([y[i] for i in idxs] + [x[-2], x[-1]])
 
